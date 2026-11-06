@@ -5,19 +5,24 @@ import { Award, BookOpen, MailCheck, Quote } from 'lucide-react'
 import { homePathFor, useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { errorMessage } from '../../lib/utils'
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-import { Logo } from '../../components/shared'
+import { useI18n } from '../../lib/i18n'
+import { LanguageSwitcher, Logo } from '../../components/shared'
 import { Button, Checkbox, Input, PageLoader, Textarea } from '../../components/ui'
 import { SetupBanner } from '../../layouts/PublicLayout'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function AuthShell({ title, subtitle, children, footer }) {
+  const { t } = useI18n()
   return (
     <div className="flex min-h-screen flex-col">
       <SetupBanner />
       <div className="grid flex-1 lg:grid-cols-2">
         <div className="flex flex-col px-6 py-8 sm:px-12">
-          <Logo />
+          <div className="flex items-center justify-between gap-4">
+            <Logo />
+            <LanguageSwitcher />
+          </div>
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
             <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
             {subtitle && <p className="mt-2 text-sm text-slate-600">{subtitle}</p>}
@@ -32,19 +37,19 @@ function AuthShell({ title, subtitle, children, footer }) {
           <div className="relative flex h-full flex-col justify-center p-16 text-white">
             <Quote className="h-10 w-10 text-amber-300" />
             <p className="mt-6 font-display text-3xl font-semibold leading-snug text-white">
-              "The beautiful thing about learning is that nobody can take it away from you."
+              {t('auth.quote')}
             </p>
-            <p className="mt-4 text-brand-200">B.B. King</p>
+            <p className="mt-4 text-brand-200">{t('auth.quoteAuthor')}</p>
             <div className="mt-14 grid max-w-md grid-cols-2 gap-4">
               <div className="rounded-xl bg-white/5 p-5 ring-1 ring-white/10">
                 <BookOpen className="h-6 w-6 text-amber-300" />
-                <p className="mt-3 font-semibold">Free courses</p>
-                <p className="text-sm text-brand-200">in 10+ in-demand skills</p>
+                <p className="mt-3 font-semibold">{t('auth.freeCourses')}</p>
+                <p className="text-sm text-brand-200">{t('auth.freeCoursesHint')}</p>
               </div>
               <div className="rounded-xl bg-white/5 p-5 ring-1 ring-white/10">
                 <Award className="h-6 w-6 text-amber-300" />
-                <p className="mt-3 font-semibold">Certificates</p>
-                <p className="text-sm text-brand-200">verified online</p>
+                <p className="mt-3 font-semibold">{t('auth.certificates')}</p>
+                <p className="text-sm text-brand-200">{t('auth.certificatesHint')}</p>
               </div>
             </div>
           </div>
@@ -56,6 +61,7 @@ function AuthShell({ title, subtitle, children, footer }) {
 
 export function Login() {
   const { user, profile, loading } = useAuth()
+  const { t } = useI18n()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -66,8 +72,8 @@ export function Login() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!EMAIL_RE.test(email.trim())) return toast.error('Enter a valid email address')
-    if (!password) return toast.error('Enter your password')
+    if (!EMAIL_RE.test(email.trim())) return toast.error(t('auth.errors.email'))
+    if (!password) return toast.error(t('auth.errors.password'))
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     setBusy(false)
@@ -75,14 +81,14 @@ export function Login() {
   }
 
   return (
-    <AuthShell title="Welcome back" subtitle="Log in to continue learning." footer={<>New to SkillRise? <Link to="/signup" className="font-semibold text-brand-600 hover:underline">Create a free account</Link></>}>
+    <AuthShell title={t('auth.login.title')} subtitle={t('auth.login.subtitle')} footer={<>{t('auth.login.new')} <Link to="/signup" className="font-semibold text-brand-600 hover:underline">{t('auth.login.create')}</Link></>}>
       <form onSubmit={submit} noValidate className="space-y-5">
-        <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input label={t('auth.email')} type="email" dir="ltr" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <div>
-          <Input label="Password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Link to="/forgot-password" className="mt-2 inline-block text-xs font-medium text-brand-600 hover:underline">Forgot password?</Link>
+          <Input label={t('auth.password')} type="password" dir="ltr" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Link to="/forgot-password" className="mt-2 inline-block text-xs font-medium text-brand-600 hover:underline">{t('auth.login.forgot')}</Link>
         </div>
-        <Button type="submit" className="w-full" size="lg" loading={busy}>Log in</Button>
+        <Button type="submit" className="w-full" size="lg" loading={busy}>{t('nav.login')}</Button>
       </form>
     </AuthShell>
   )
@@ -90,6 +96,7 @@ export function Login() {
 
 export function Signup() {
   const { user, profile } = useAuth()
+  const { t } = useI18n()
   const [params] = useSearchParams()
   const [form, setForm] = useState({ full_name: '', email: '', password: '', apply_teacher: params.get('teach') === '1', expertise: '', experience: '', portfolio_url: '' })
   const [busy, setBusy] = useState(false)
@@ -100,10 +107,10 @@ export function Signup() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!form.full_name.trim()) return toast.error('Enter your full name')
-    if (!EMAIL_RE.test(form.email.trim())) return toast.error('Enter a valid email address')
-    if (form.password.length < 8) return toast.error('Password must be at least 8 characters')
-    if (form.apply_teacher && !form.expertise.trim()) return toast.error('Tell us your area of expertise')
+    if (!form.full_name.trim()) return toast.error(t('auth.errors.name'))
+    if (!EMAIL_RE.test(form.email.trim())) return toast.error(t('auth.errors.email'))
+    if (form.password.length < 8) return toast.error(t('auth.errors.passwordLength'))
+    if (form.apply_teacher && !form.expertise.trim()) return toast.error(t('auth.errors.expertise'))
     setBusy(true)
     const { email, password, apply_teacher, ...rest } = form
     const { data, error } = await supabase.auth.signUp({
@@ -116,17 +123,17 @@ export function Signup() {
     })
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    if (data.session) toast.success('Welcome to SkillRise!')
+    if (data.session) toast.success(t('auth.signup.welcome'))
     else setDone(true)
   }
 
   if (done) {
     return (
-      <AuthShell title="Check your email" footer={<Link to="/login" className="font-semibold text-brand-600 hover:underline">Back to log in</Link>}>
+      <AuthShell title={t('auth.signup.checkEmail')} footer={<Link to="/login" className="font-semibold text-brand-600 hover:underline">{t('auth.backToLogin')}</Link>}>
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
           <MailCheck className="mx-auto h-10 w-10 text-emerald-600" />
           <p className="mt-3 text-sm text-emerald-900">
-            We sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account.
+            {t('auth.signup.sentBefore')} <strong dir="ltr">{form.email}</strong>{t('auth.signup.sentAfter')}
           </p>
         </div>
       </AuthShell>
@@ -135,38 +142,39 @@ export function Signup() {
 
   return (
     <AuthShell
-      title="Create your free account"
-      subtitle="Join thousands of learners building skills for the future."
-      footer={<>Already have an account? <Link to="/login" className="font-semibold text-brand-600 hover:underline">Log in</Link></>}
+      title={t('auth.signup.title')}
+      subtitle={t('auth.signup.subtitle')}
+      footer={<>{t('auth.signup.haveAccount')} <Link to="/login" className="font-semibold text-brand-600 hover:underline">{t('nav.login')}</Link></>}
     >
       <form onSubmit={submit} noValidate className="space-y-5">
-        <Input label="Full name" required autoComplete="name" value={form.full_name} onChange={set('full_name')} hint="This name appears on your certificates." />
-        <Input label="Email" type="email" required autoComplete="email" value={form.email} onChange={set('email')} />
-        <Input label="Password" type="password" required autoComplete="new-password" minLength={8} value={form.password} onChange={set('password')} hint="At least 8 characters." />
+        <Input label={t('contact.fullName')} required autoComplete="name" value={form.full_name} onChange={set('full_name')} hint={t('auth.signup.nameHint')} />
+        <Input label={t('auth.email')} type="email" dir="ltr" required autoComplete="email" value={form.email} onChange={set('email')} />
+        <Input label={t('auth.password')} type="password" dir="ltr" required autoComplete="new-password" minLength={8} value={form.password} onChange={set('password')} hint={t('auth.signup.passwordHint')} />
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <Checkbox label="I also want to teach on SkillRise" description="Your application will be reviewed by our team." checked={form.apply_teacher} onChange={set('apply_teacher')} />
+          <Checkbox label={t('auth.signup.alsoTeach')} description={t('auth.signup.alsoTeachHint')} checked={form.apply_teacher} onChange={set('apply_teacher')} />
           {form.apply_teacher && (
             <div className="mt-4 space-y-4">
-              <Input label="Area of expertise" required placeholder="e.g. Digital marketing" value={form.expertise} onChange={set('expertise')} />
-              <Textarea label="Experience" rows={3} value={form.experience} onChange={set('experience')} />
-              <Input label="Portfolio / LinkedIn" type="url" placeholder="https://" value={form.portfolio_url} onChange={set('portfolio_url')} />
+              <Input label={t('teach.expertise')} required placeholder={t('auth.signup.expertisePlaceholder')} value={form.expertise} onChange={set('expertise')} />
+              <Textarea label={t('auth.signup.experience')} rows={3} value={form.experience} onChange={set('experience')} />
+              <Input label={t('auth.signup.portfolio')} type="url" dir="ltr" placeholder="https://" value={form.portfolio_url} onChange={set('portfolio_url')} />
             </div>
           )}
         </div>
-        <Button type="submit" className="w-full" size="lg" loading={busy}>Create account</Button>
-        <p className="text-center text-xs text-slate-500">By creating an account you agree to learn, share and respect our community.</p>
+        <Button type="submit" className="w-full" size="lg" loading={busy}>{t('auth.signup.submit')}</Button>
+        <p className="text-center text-xs text-slate-500">{t('auth.signup.agree')}</p>
       </form>
     </AuthShell>
   )
 }
 
 export function ForgotPassword() {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
   const submit = async (e) => {
     e.preventDefault()
-    if (!EMAIL_RE.test(email.trim())) return toast.error('Enter a valid email address')
+    if (!EMAIL_RE.test(email.trim())) return toast.error(t('auth.errors.email'))
     setBusy(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` })
     setBusy(false)
@@ -174,13 +182,13 @@ export function ForgotPassword() {
     setSent(true)
   }
   return (
-    <AuthShell title="Reset your password" subtitle="We'll email you a secure link to set a new password." footer={<Link to="/login" className="font-semibold text-brand-600 hover:underline">Back to log in</Link>}>
+    <AuthShell title={t('auth.forgot.title')} subtitle={t('auth.forgot.subtitle')} footer={<Link to="/login" className="font-semibold text-brand-600 hover:underline">{t('auth.backToLogin')}</Link>}>
       {sent ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">If an account exists for {email}, a reset link is on its way.</div>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">{t('auth.forgot.sent', { email })}</div>
       ) : (
         <form onSubmit={submit} noValidate className="space-y-5">
-          <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Button type="submit" className="w-full" size="lg" loading={busy}>Send reset link</Button>
+          <Input label={t('auth.email')} type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Button type="submit" className="w-full" size="lg" loading={busy}>{t('auth.forgot.submit')}</Button>
         </form>
       )}
     </AuthShell>
@@ -189,6 +197,7 @@ export function ForgotPassword() {
 
 export function ResetPassword() {
   const { session, profile } = useAuth()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -201,23 +210,23 @@ export function ResetPassword() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (password.length < 8) return toast.error('Password must be at least 8 characters')
+    if (password.length < 8) return toast.error(t('auth.errors.passwordLength'))
     setBusy(true)
     const { error } = await supabase.auth.updateUser({ password })
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success('Password updated')
+    toast.success(t('auth.reset.updated'))
     navigate(homePathFor(profile?.role))
   }
 
   return (
-    <AuthShell title="Choose a new password">
+    <AuthShell title={t('auth.reset.title')}>
       {!ready ? (
-        <p className="text-sm text-slate-600">Open the reset link from your email to continue. If it has expired, <Link to="/forgot-password" className="font-semibold text-brand-600">request a new one</Link>.</p>
+        <p className="text-sm text-slate-600">{t('auth.reset.openLink')} <Link to="/forgot-password" className="font-semibold text-brand-600">{t('auth.reset.requestNew')}</Link>{t('home.faq.period')}</p>
       ) : (
         <form onSubmit={submit} noValidate className="space-y-5">
-          <Input label="New password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Button type="submit" className="w-full" size="lg" loading={busy}>Update password</Button>
+          <Input label={t('auth.reset.newPassword')} type="password" dir="ltr" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Button type="submit" className="w-full" size="lg" loading={busy}>{t('auth.reset.submit')}</Button>
         </form>
       )}
     </AuthShell>

@@ -5,10 +5,12 @@ import { useSettings } from '../../context/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import { errorMessage } from '../../lib/utils'
 import { Button, Input, Textarea } from '../../components/ui'
+import { useI18n } from '../../lib/i18n'
 import { PageHero } from './About'
 
 export default function Contact() {
   const { settings } = useSettings()
+  const { t } = useI18n()
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
@@ -25,13 +27,13 @@ export default function Contact() {
 
   return (
     <>
-      <PageHero eyebrow="Contact" title="We'd love to hear from you" description="Questions about courses, partnerships, volunteering or donations? Send us a message and our team will reply soon." />
+      <PageHero eyebrow={t('nav.contact')} title={t('contact.title')} description={t('contact.description')} />
       <section className="container-page grid gap-10 py-16 lg:grid-cols-3">
         <div className="space-y-4">
           {[
-            settings.contact_email && { icon: Mail, label: 'Email', value: settings.contact_email, href: `mailto:${settings.contact_email}` },
-            settings.contact_phone && { icon: Phone, label: 'Phone', value: settings.contact_phone, href: `tel:${settings.contact_phone}` },
-            settings.address && { icon: MapPin, label: 'Address', value: settings.address },
+            settings.contact_email && { icon: Mail, label: t('contact.email'), value: settings.contact_email, href: `mailto:${settings.contact_email}`, ltr: true },
+            settings.contact_phone && { icon: Phone, label: t('contact.phone'), value: settings.contact_phone, href: `tel:${settings.contact_phone}`, ltr: true },
+            settings.address && { icon: MapPin, label: t('contact.address'), value: settings.address },
           ]
             .filter(Boolean)
             .map((c) => (
@@ -41,7 +43,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">{c.label}</p>
-                  {c.href ? <a href={c.href} className="font-semibold text-slate-900 hover:text-brand-700">{c.value}</a> : <p className="font-semibold text-slate-900">{c.value}</p>}
+                  {c.href ? <a href={c.href} dir={c.ltr ? 'ltr' : undefined} className="font-semibold text-slate-900 hover:text-brand-700">{c.value}</a> : <p className="font-semibold text-slate-900">{c.value}</p>}
                 </div>
               </div>
             ))}
@@ -50,17 +52,17 @@ export default function Contact() {
           {sent ? (
             <div className="py-12 text-center">
               <CircleCheck className="mx-auto h-12 w-12 text-emerald-500" />
-              <h2 className="mt-4 text-2xl font-bold">Message sent</h2>
-              <p className="mt-2 text-slate-600">Thank you for reaching out. We'll get back to you as soon as possible.</p>
+              <h2 className="mt-4 text-2xl font-bold">{t('contact.sent')}</h2>
+              <p className="mt-2 text-slate-600">{t('contact.sentText')}</p>
             </div>
           ) : (
             <form onSubmit={submit} className="grid gap-5 sm:grid-cols-2">
-              <Input label="Full name" required value={form.name} onChange={set('name')} />
-              <Input label="Email" type="email" required value={form.email} onChange={set('email')} />
-              <Input label="Subject" className="sm:col-span-2" value={form.subject} onChange={set('subject')} />
-              <Textarea label="Message" rows={6} required className="sm:col-span-2" value={form.message} onChange={set('message')} />
+              <Input label={t('contact.fullName')} required value={form.name} onChange={set('name')} />
+              <Input label={t('contact.email')} type="email" dir="ltr" required value={form.email} onChange={set('email')} />
+              <Input label={t('contact.subject')} className="sm:col-span-2" value={form.subject} onChange={set('subject')} />
+              <Textarea label={t('contact.message')} rows={6} required className="sm:col-span-2" value={form.message} onChange={set('message')} />
               <div className="sm:col-span-2">
-                <Button type="submit" loading={busy} size="lg">Send message</Button>
+                <Button type="submit" loading={busy} size="lg">{t('contact.send')}</Button>
               </div>
             </form>
           )}

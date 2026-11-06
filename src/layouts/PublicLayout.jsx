@@ -5,19 +5,21 @@ import { homePathFor, useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { cn } from '../lib/utils'
-import { Logo, SOCIALS, SocialIcon } from '../components/shared'
+import { useI18n } from '../lib/i18n'
+import { LanguageSwitcher, Logo, SOCIALS, SocialIcon } from '../components/shared'
 import { Avatar, Button } from '../components/ui'
 
 const NAV = [
-  { to: '/courses', label: 'Courses' },
-  { to: '/about', label: 'About' },
-  { to: '/blog', label: 'Blog' },
-  { to: '/teach', label: 'Teach' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/courses', label: 'nav.courses' },
+  { to: '/about', label: 'nav.about' },
+  { to: '/blog', label: 'nav.blog' },
+  { to: '/teach', label: 'nav.teach' },
+  { to: '/contact', label: 'nav.contact' },
 ]
 
 function Navbar() {
   const { user, profile, signOut } = useAuth()
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
@@ -45,57 +47,61 @@ function Navbar() {
                 cn('rounded-lg px-3 py-2 text-sm font-medium transition', isActive ? 'text-brand-700' : 'text-slate-600 hover:text-slate-900')
               }
             >
-              {item.label}
+              {t(item.label)}
             </NavLink>
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSwitcher />
           <Button to="/donate" variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
-            <Heart className="h-4 w-4" /> Donate
+            <Heart className="h-4 w-4" /> {t('nav.donate')}
           </Button>
           {user ? (
             <>
               <Button to={homePathFor(profile?.role)} variant="secondary" size="sm">
-                <LayoutDashboard className="h-4 w-4" /> Dashboard
+                <LayoutDashboard className="h-4 w-4" /> {t('nav.dashboard')}
               </Button>
-              <Link to="/settings/profile" title="Profile">
+              <Link to="/settings/profile" title={t('nav.profile')}>
                 <Avatar src={profile?.avatar_url} name={profile?.full_name} size="sm" />
               </Link>
             </>
           ) : (
             <>
-              <Button to="/login" variant="ghost" size="sm">Log in</Button>
-              <Button to="/signup" size="sm">Join for free</Button>
+              <Button to="/login" variant="ghost" size="sm">{t('nav.login')}</Button>
+              <Button to="/signup" size="sm">{t('nav.joinFree')}</Button>
             </>
           )}
         </div>
-        <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <LanguageSwitcher />
+          <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100" onClick={() => setOpen(!open)} aria-label={t('nav.toggleMenu')}>
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
       {open && (
         <div className="border-t border-slate-200 bg-white md:hidden">
           <nav className="container-page flex flex-col py-3">
             {NAV.map((item) => (
               <NavLink key={item.to} to={item.to} className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                {item.label}
+                {t(item.label)}
               </NavLink>
             ))}
             <NavLink to="/donate" className="rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">
-              Donate
+              {t('nav.donate')}
             </NavLink>
             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
               {user ? (
                 <>
-                  <Button to={homePathFor(profile?.role)} variant="secondary">Dashboard</Button>
+                  <Button to={homePathFor(profile?.role)} variant="secondary">{t('nav.dashboard')}</Button>
                   <Button variant="ghost" onClick={signOut}>
-                    <LogOut className="h-4 w-4" /> Sign out
+                    <LogOut className="h-4 w-4 rtl:-scale-x-100" /> {t('nav.signOut')}
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button to="/login" variant="secondary">Log in</Button>
-                  <Button to="/signup">Join free</Button>
+                  <Button to="/login" variant="secondary">{t('nav.login')}</Button>
+                  <Button to="/signup">{t('nav.joinFreeShort')}</Button>
                 </>
               )}
             </div>
@@ -108,6 +114,7 @@ function Navbar() {
 
 function Footer() {
   const { settings } = useSettings()
+  const { t, locale } = useI18n()
   const socials = SOCIALS.filter((s) => settings[`${s}_url`])
   return (
     <footer className="bg-slate-950 text-slate-400 print:hidden">
@@ -115,7 +122,7 @@ function Footer() {
         <div className="md:col-span-4">
           <Logo light />
           <p className="mt-4 max-w-xs text-sm leading-relaxed">
-            A non-profit academy helping people learn in-demand digital skills for free, so they can build careers and businesses.
+            {t('footer.blurb')}
           </p>
           {socials.length > 0 && (
             <div className="mt-5 flex gap-2">
@@ -127,20 +134,20 @@ function Footer() {
             </div>
           )}
         </div>
-        <FooterCol title="Learn" links={[['All courses', '/courses'], ['Blog', '/blog'], ['Verify a certificate', '/verify'], ['Student login', '/login']]} />
-        <FooterCol title="Organization" links={[['About us', '/about'], ['Become a teacher', '/teach'], ['Donate', '/donate'], ['Contact', '/contact']]} />
+        <FooterCol title={t('footer.learn')} links={[[t('footer.allCourses'), '/courses'], [t('nav.blog'), '/blog'], [t('footer.verify'), '/verify'], [t('footer.studentLogin'), '/login']]} />
+        <FooterCol title={t('footer.organization')} links={[[t('footer.aboutUs'), '/about'], [t('footer.becomeTeacher'), '/teach'], [t('nav.donate'), '/donate'], [t('nav.contact'), '/contact']]} />
         <div className="md:col-span-4">
-          <h4 className="text-sm font-semibold text-white">Get in touch</h4>
+          <h4 className="text-sm font-semibold text-white">{t('footer.getInTouch')}</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {settings.contact_email && (
               <li className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 text-slate-500" />
-                <a href={`mailto:${settings.contact_email}`} className="hover:text-white">{settings.contact_email}</a>
+                <a href={`mailto:${settings.contact_email}`} dir="ltr" className="hover:text-white">{settings.contact_email}</a>
               </li>
             )}
             {settings.contact_phone && (
               <li className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 text-slate-500" /> {settings.contact_phone}
+                <Phone className="h-4 w-4 text-slate-500" /> <span dir="ltr">{settings.contact_phone}</span>
               </li>
             )}
             {settings.address && (
@@ -150,13 +157,13 @@ function Footer() {
             )}
           </ul>
           <Button to="/donate" variant="accent" size="sm" className="mt-6">
-            <Heart className="h-4 w-4" /> Support our mission
+            <Heart className="h-4 w-4" /> {t('footer.support')}
           </Button>
         </div>
       </div>
       <div className="border-t border-white/5">
         <div className="container-page flex flex-col gap-2 py-6 text-xs sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} SkillRise Academy. A registered non-profit organization.</p>
+          <p>{t('footer.copyright', { year: new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(new Date()) })}</p>
           <p>skillriseacademy.org</p>
         </div>
       </div>

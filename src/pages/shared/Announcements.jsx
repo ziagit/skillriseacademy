@@ -2,9 +2,11 @@ import { Bell, Megaphone } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { formatDate } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { Avatar, Badge, Card, EmptyState, PageHeader, PageLoader } from '../../components/ui'
 
 export default function Announcements() {
+  const { t } = useI18n()
   const { data, loading } = useQuery(
     async () =>
       unwrap(
@@ -19,9 +21,9 @@ export default function Announcements() {
   if (loading) return <PageLoader />
   return (
     <>
-      <PageHeader title="Announcements" description="Updates from SkillRise and your teachers." />
+      <PageHeader title={t('portalNav.announcements')} description={t('announcements.description')} />
       {data.length === 0 ? (
-        <EmptyState icon={Bell} title="You're all caught up" description="Announcements from SkillRise and your courses will appear here." />
+        <EmptyState icon={Bell} title={t('announcements.empty')} description={t('announcements.emptyHint')} />
       ) : (
         <div className="space-y-4">
           {data.map((a) => (
@@ -32,10 +34,10 @@ export default function Announcements() {
                   <p className="text-sm font-semibold text-slate-900">{a.author?.full_name}</p>
                   <p className="text-xs text-slate-500">{formatDate(a.created_at)}</p>
                 </div>
-                {a.course ? <Badge tone="blue">{a.course.title}</Badge> : <Badge tone="violet"><Megaphone className="h-3 w-3" /> SkillRise</Badge>}
+                {a.course ? <Badge tone="blue">{a.course.title}</Badge> : <Badge tone="violet"><Megaphone className="h-3 w-3" /> {t('announcements.brand')}</Badge>}
               </div>
-              <h3 className="mt-4 text-lg font-semibold">{a.title}</h3>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{a.body}</p>
+              <h3 dir="auto" className="mt-4 text-lg font-semibold">{a.title}</h3>
+              <p dir="auto" className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{a.body}</p>
             </Card>
           ))}
         </div>

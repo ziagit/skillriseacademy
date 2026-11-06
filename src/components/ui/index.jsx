@@ -2,6 +2,7 @@ import { useEffect, useId } from 'react'
 import { Link } from 'react-router-dom'
 import { LoaderCircle, X } from 'lucide-react'
 import { cn, initials } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 
 const buttonVariants = {
   primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-600/20',
@@ -80,7 +81,7 @@ export function Select({ label, hint, error, className, children, required, ...p
   const id = useId()
   return (
     <Field label={label} hint={hint} error={error} htmlFor={id} required={required} className={className}>
-      <select id={id} required={required} className="input pr-8" {...props}>
+      <select id={id} required={required} className="input pe-8" {...props}>
         {children}
       </select>
     </Field>
@@ -153,12 +154,12 @@ const STATUS_TONES = {
   teacher: 'blue',
   student: 'slate',
 }
-const STATUS_LABELS = { pending: 'In review' }
-
 export function StatusBadge({ status }) {
+  const { t } = useI18n()
+  const label = t(`status.${status}`)
   return (
     <Badge tone={STATUS_TONES[status] || 'slate'} className="capitalize">
-      {STATUS_LABELS[status] || status?.replace('_', ' ')}
+      {label.startsWith('status.') ? status?.replace('_', ' ') : label}
     </Badge>
   )
 }
@@ -167,11 +168,12 @@ export function Spinner({ className }) {
   return <LoaderCircle className={cn('h-5 w-5 animate-spin text-brand-600', className)} />
 }
 
-export function PageLoader({ label = 'Loading…' }) {
+export function PageLoader({ label }) {
+  const { t } = useI18n()
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-sm text-slate-500">
       <Spinner className="h-7 w-7" />
-      {label}
+      {label ?? t('common.loading')}
     </div>
   )
 }
@@ -192,13 +194,14 @@ export function EmptyState({ icon: Icon, title, description, action, className }
 }
 
 export function ErrorState({ error, onRetry }) {
+  const { t } = useI18n()
   return (
     <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-      <p className="font-medium">We couldn't load this data.</p>
+      <p className="font-medium">{t('errors.loadData')}</p>
       <p className="mt-1 text-red-600/80">{error?.message || String(error)}</p>
       {onRetry && (
         <button onClick={onRetry} className="mt-2 font-semibold underline">
-          Try again
+          {t('common.tryAgain')}
         </button>
       )}
     </div>
@@ -206,6 +209,7 @@ export function ErrorState({ error, onRetry }) {
 }
 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }) {
+  const { t } = useI18n()
   useEffect(() => {
     if (!open) return
     const onKey = (e) => e.key === 'Escape' && onClose?.()
@@ -228,7 +232,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
             {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label={t('common.close')}>
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -321,14 +325,15 @@ export function ProgressBar({ value = 0, className }) {
   )
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Search…', className }) {
+export function SearchInput({ value, onChange, placeholder, className }) {
+  const { t } = useI18n()
   return (
     <div className={cn('relative', className)}>
-      <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" strokeLinecap="round" />
       </svg>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="input pl-9" />
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? t('common.search')} className="input ps-9" />
     </div>
   )
 }

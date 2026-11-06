@@ -4,11 +4,13 @@ import { BookOpen } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { DEFAULT_CATEGORIES } from '../../lib/constants'
-import { cn, LEVELS } from '../../lib/utils'
+import { cn, LEVEL_KEYS, levelLabel } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { COURSE_CARD_SELECT, CategoryIcon, CourseCard } from '../../components/shared'
 import { EmptyState, PageLoader, SearchInput } from '../../components/ui'
 
 export default function Courses() {
+  const { t } = useI18n()
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState(params.get('q') || '')
   const category = params.get('category') || ''
@@ -50,15 +52,15 @@ export default function Courses() {
     <>
       <section className="border-b border-slate-200 bg-gradient-to-b from-brand-50/60 to-white">
         <div className="container-page py-14">
-          <p className="eyebrow">Course catalog</p>
-          <h1 className="mt-2 text-4xl font-bold">Explore free courses</h1>
-          <p className="mt-3 max-w-2xl text-slate-600">Every course is free, self-paced and includes a verified certificate on completion.</p>
+          <p className="eyebrow">{t('courses.eyebrow')}</p>
+          <h1 className="mt-2 text-4xl font-bold">{t('courses.title')}</h1>
+          <p className="mt-3 max-w-2xl text-slate-600">{t('courses.subtitle')}</p>
           <div className="mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row">
-            <SearchInput value={search} onChange={setSearch} placeholder="Search courses, topics or teachers…" className="flex-1" />
+            <SearchInput value={search} onChange={setSearch} placeholder={t('courses.searchPlaceholder')} className="flex-1" />
             <select className="input sm:w-48" value={level} onChange={(e) => setParam('level', e.target.value)}>
-              <option value="">All levels</option>
-              {Object.entries(LEVELS).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
+              <option value="">{t('courses.allLevels')}</option>
+              {LEVEL_KEYS.map((v) => (
+                <option key={v} value={v}>{levelLabel(v)}</option>
               ))}
             </select>
           </div>
@@ -67,7 +69,7 @@ export default function Courses() {
 
       <section className="container-page py-10">
         <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0">
-          <CategoryChip active={!category} onClick={() => setParam('category', '')}>All</CategoryChip>
+          <CategoryChip active={!category} onClick={() => setParam('category', '')}>{t('courses.all')}</CategoryChip>
           {categories.map((c) => (
             <CategoryChip key={c.slug} active={category === c.slug} onClick={() => setParam('category', c.slug)}>
               <CategoryIcon name={c.icon} className="h-4 w-4" /> {c.name}
@@ -76,17 +78,17 @@ export default function Courses() {
         </div>
 
         {loading ? (
-          <PageLoader label="Loading courses…" />
+          <PageLoader label={t('courses.loading')} />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title={data?.courses?.length ? 'No courses match your filters' : 'New courses are on the way'}
-            description={data?.courses?.length ? 'Try a different search or category.' : 'Our teachers are preparing courses right now. Create an account to be notified.'}
+            title={data?.courses?.length ? t('courses.noMatch') : t('courses.comingSoon')}
+            description={data?.courses?.length ? t('courses.noMatchHint') : t('courses.comingSoonHint')}
           />
         ) : (
           <>
             <p className="mb-5 text-sm text-slate-500">
-              Showing <span className="font-semibold text-slate-800">{filtered.length}</span> course{filtered.length === 1 ? '' : 's'}
+              {t('courses.showing', { count: filtered.length })}
             </p>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((c) => (

@@ -4,43 +4,45 @@ import { useSettings } from '../../context/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { errorMessage } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { Button, Card, CardHeader, Input, PageHeader, PageLoader, Textarea } from '../../components/ui'
 
+// Labels are translation keys under admin.settings.
 const GROUPS = [
   {
-    title: 'Organization',
+    id: 'organization',
     fields: [
-      ['site_name', 'Organization name'],
-      ['tagline', 'Tagline'],
-      ['contact_email', 'Contact email', 'email'],
-      ['contact_phone', 'Contact phone'],
-      ['address', 'Address', 'textarea'],
+      ['site_name'],
+      ['tagline'],
+      ['contact_email', 'email'],
+      ['contact_phone'],
+      ['address', 'textarea'],
     ],
   },
   {
-    title: 'Donations',
-    description: 'Shown on the Donate page. Use a link to your payment provider (e.g. PayPal, Stripe Payment Link, GoFundMe) and/or bank details.',
+    id: 'donations',
     fields: [
-      ['donate_url', 'Online donation link', 'url'],
-      ['donate_bank_details', 'Bank transfer details', 'textarea'],
+      ['donate_url', 'url'],
+      ['donate_bank_details', 'textarea'],
     ],
   },
   {
-    title: 'Social media',
-    description: 'Leave blank to hide an icon in the footer.',
+    id: 'social',
     fields: [
-      ['facebook_url', 'Facebook', 'url'],
-      ['instagram_url', 'Instagram', 'url'],
-      ['youtube_url', 'YouTube', 'url'],
-      ['linkedin_url', 'LinkedIn', 'url'],
-      ['x_url', 'X (Twitter)', 'url'],
-      ['whatsapp_url', 'WhatsApp link', 'url'],
+      ['facebook_url', 'url'],
+      ['instagram_url', 'url'],
+      ['youtube_url', 'url'],
+      ['linkedin_url', 'url'],
+      ['x_url', 'url'],
+      ['whatsapp_url', 'url'],
     ],
   },
 ]
+const LTR_TYPES = ['email', 'url']
 
 export default function AdminSettings() {
   const { reload: reloadSettings } = useSettings()
+  const { t } = useI18n()
   const [form, setForm] = useState(null)
   const [busy, setBusy] = useState(false)
   const { loading } = useQuery(async () => {
@@ -57,30 +59,30 @@ export default function AdminSettings() {
     const { error } = await supabase.from('site_settings').upsert(rows)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success('Settings saved')
+    toast.success(t('admin.settings.saved'))
     reloadSettings()
   }
 
   return (
     <form onSubmit={save}>
-      <PageHeader title="Site settings" description="Contact details, donation options and social links shown across the website." actions={<Button type="submit" loading={busy}>Save settings</Button>} />
+      <PageHeader title={t('portalNav.siteSettings')} description={t('admin.settings.description')} actions={<Button type="submit" loading={busy}>{t('admin.settings.save')}</Button>} />
       <div className="space-y-6">
         {GROUPS.map((g) => (
-          <Card key={g.title}>
-            <CardHeader title={g.title} description={g.description} />
+          <Card key={g.id}>
+            <CardHeader title={t(`admin.settings.groups.${g.id}`)} description={g.id !== 'organization' ? t(`admin.settings.groups.${g.id}Hint`) : undefined} />
             <div className="grid gap-5 p-5 sm:grid-cols-2">
-              {g.fields.map(([key, label, type]) =>
+              {g.fields.map(([key, type]) =>
                 type === 'textarea' ? (
-                  <Textarea key={key} label={label} rows={4} className="sm:col-span-2" value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                  <Textarea key={key} label={t(`admin.settings.fields.${key}`)} rows={4} dir="auto" className="sm:col-span-2" value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                 ) : (
-                  <Input key={key} label={label} type={type || 'text'} placeholder={type === 'url' ? 'https://' : ''} value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                  <Input key={key} label={t(`admin.settings.fields.${key}`)} type={type || 'text'} dir={LTR_TYPES.includes(type) ? 'ltr' : undefined} placeholder={type === 'url' ? 'https://' : ''} value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                 ),
               )}
             </div>
           </Card>
         ))}
         <div className="flex justify-end">
-          <Button type="submit" loading={busy} size="lg">Save settings</Button>
+          <Button type="submit" loading={busy} size="lg">{t('admin.settings.save')}</Button>
         </div>
       </div>
     </form>

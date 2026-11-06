@@ -4,11 +4,13 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { timeAgo } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { CourseThumbnail } from '../../components/shared'
 import { Avatar, Button, Card, CardHeader, EmptyState, PageHeader, PageLoader, StatCard, StatusBadge } from '../../components/ui'
 
 export default function TeacherDashboard() {
   const { user } = useAuth()
+  const { t } = useI18n()
   const { data, loading } = useQuery(async () => {
     const courses = unwrap(await supabase.from('courses').select('id, title, slug, status, thumbnail_url, updated_at, category:categories(icon, color), enrollments(count)').eq('teacher_id', user.id).order('updated_at', { ascending: false }))
     const ids = courses.map((c) => c.id)
@@ -33,28 +35,28 @@ export default function TeacherDashboard() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Teacher overview"
-        description="Track your courses, learners and work that needs your attention."
+        title={t('portalNav.teacherOverview')}
+        description={t('teacher.dash.description')}
         actions={
           <>
-            <Button to="/teacher/blog/new" variant="secondary"><PenLine className="h-4 w-4" /> Write a post</Button>
-            <Button to="/teacher/courses?new=1"><Plus className="h-4 w-4" /> New course</Button>
+            <Button to="/teacher/blog/new" variant="secondary"><PenLine className="h-4 w-4" /> {t('teacher.dash.writePost')}</Button>
+            <Button to="/teacher/courses?new=1"><Plus className="h-4 w-4" /> {t('teacher.newCourse')}</Button>
           </>
         }
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="My courses" value={data.courses.length} icon={BookOpen} to="/teacher/courses" />
-        <StatCard label="Total learners" value={data.students} icon={Users} tone="violet" />
-        <StatCard label="Completions" value={data.completions} icon={GraduationCap} tone="green" />
-        <StatCard label="Awaiting grading" value={data.pendingCount} icon={ClipboardList} tone="amber" to="/teacher/submissions" />
+        <StatCard label={t('portalNav.myCourses')} value={t('common.number', { n: data.courses.length })} icon={BookOpen} to="/teacher/courses" />
+        <StatCard label={t('teacher.dash.learners')} value={t('common.number', { n: data.students })} icon={Users} tone="violet" />
+        <StatCard label={t('teacher.dash.completions')} value={t('common.number', { n: data.completions })} icon={GraduationCap} tone="green" />
+        <StatCard label={t('teacher.dash.awaiting')} value={t('common.number', { n: data.pendingCount })} icon={ClipboardList} tone="amber" to="/teacher/submissions" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">
-          <CardHeader title="My courses" action={<Link to="/teacher/courses" className="text-sm font-semibold text-brand-600 hover:underline">Manage</Link>} />
+          <CardHeader title={t('portalNav.myCourses')} action={<Link to="/teacher/courses" className="text-sm font-semibold text-brand-600 hover:underline">{t('teacher.dash.manage')}</Link>} />
           {data.courses.length === 0 ? (
             <div className="p-5">
-              <EmptyState icon={BookOpen} title="Create your first course" description="Use our course builder to add modules, lessons, quizzes and assignments." action={<Button to="/teacher/courses?new=1">New course</Button>} />
+              <EmptyState icon={BookOpen} title={t('teacher.dash.createFirst')} description={t('teacher.dash.createFirstHint')} action={<Button to="/teacher/courses?new=1">{t('teacher.newCourse')}</Button>} />
             </div>
           ) : (
             <ul className="divide-y divide-slate-100">
@@ -64,7 +66,7 @@ export default function TeacherDashboard() {
                     <CourseThumbnail course={c} className="!w-20 shrink-0 rounded-md" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-slate-900">{c.title}</p>
-                      <p className="text-xs text-slate-500">{c.enrollments?.[0]?.count || 0} learners · updated {timeAgo(c.updated_at)}</p>
+                      <p className="text-xs text-slate-500">{t('courseDetail.learners', { count: c.enrollments?.[0]?.count || 0 })} · {t('teacher.updated', { time: timeAgo(c.updated_at) })}</p>
                     </div>
                     <StatusBadge status={c.status} />
                   </Link>
@@ -74,7 +76,7 @@ export default function TeacherDashboard() {
           )}
         </Card>
         <Card className="lg:col-span-2">
-          <CardHeader title="Needs grading" action={<Link to="/teacher/submissions" className="text-sm font-semibold text-brand-600 hover:underline">All</Link>} />
+          <CardHeader title={t('teacher.dash.needsGrading')} action={<Link to="/teacher/submissions" className="text-sm font-semibold text-brand-600 hover:underline">{t('common.all')}</Link>} />
           <ul className="divide-y divide-slate-100">
             {data.pending.map((s) => (
               <li key={s.id}>
@@ -88,7 +90,7 @@ export default function TeacherDashboard() {
                 </Link>
               </li>
             ))}
-            {data.pending.length === 0 && <li className="px-5 py-10 text-center text-sm text-slate-500">Nothing to grade right now 🎉</li>}
+            {data.pending.length === 0 && <li className="px-5 py-10 text-center text-sm text-slate-500">{t('teacher.dash.nothingToGrade')}</li>}
           </ul>
         </Card>
       </div>

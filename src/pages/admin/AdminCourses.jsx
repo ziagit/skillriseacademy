@@ -5,10 +5,12 @@ import { Archive, BookOpen, Eye, Pencil, Send, Star, Undo2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { cn, errorMessage, timeAgo } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { CourseThumbnail } from '../../components/shared'
 import { Button, Card, EmptyState, Modal, PageHeader, PageLoader, SearchInput, StatusBadge, Tabs, Textarea } from '../../components/ui'
 
 export default function AdminCourses() {
+  const { t } = useI18n()
   const [params, setParams] = useSearchParams()
   const status = params.get('status') || 'all'
   const [search, setSearch] = useState('')
@@ -35,35 +37,35 @@ export default function AdminCourses() {
 
   return (
     <>
-      <PageHeader title="Courses" description="Review, publish and feature courses across the academy." />
+      <PageHeader title={t('portalNav.courses')} description={t('admin.courses.description')} />
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <Tabs
           value={status}
           onChange={(s) => setParams(s === 'all' ? {} : { status: s })}
           tabs={[
-            { value: 'all', label: 'All', count: data.length },
-            { value: 'pending', label: 'In review', count: count('pending') },
-            { value: 'published', label: 'Published', count: count('published') },
-            { value: 'draft', label: 'Drafts', count: count('draft') },
-            { value: 'archived', label: 'Archived', count: count('archived') },
+            { value: 'all', label: t('common.all'), count: t('common.number', { n: data.length }) },
+            { value: 'pending', label: t('status.pending'), count: t('common.number', { n: count('pending') }) },
+            { value: 'published', label: t('status.published'), count: t('common.number', { n: count('published') }) },
+            { value: 'draft', label: t('admin.drafts'), count: t('common.number', { n: count('draft') }) },
+            { value: 'archived', label: t('status.archived'), count: t('common.number', { n: count('archived') }) },
           ]}
         />
-        <SearchInput value={search} onChange={setSearch} placeholder="Search courses or teachers…" className="sm:w-72" />
+        <SearchInput value={search} onChange={setSearch} placeholder={t('admin.courses.search')} className="sm:w-72" />
       </div>
       {list.length === 0 ? (
-        <EmptyState icon={BookOpen} title="No courses here" />
+        <EmptyState icon={BookOpen} title={t('admin.courses.empty')} />
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="table-base">
               <thead>
                 <tr>
-                  <th>Course</th>
-                  <th>Teacher</th>
-                  <th>Lessons</th>
-                  <th>Learners</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
+                  <th>{t('admin.courses.course')}</th>
+                  <th>{t('roles.teacher')}</th>
+                  <th>{t('player.tabLessons')}</th>
+                  <th>{t('admin.courses.learners')}</th>
+                  <th>{t('studentsTab.status')}</th>
+                  <th className="text-end">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -73,28 +75,28 @@ export default function AdminCourses() {
                       <div className="flex items-center gap-3">
                         <CourseThumbnail course={c} className="!w-20 shrink-0 rounded-md" />
                         <div className="min-w-0">
-                          <p className="max-w-xs truncate font-medium text-slate-900">{c.title}</p>
-                          <p className="text-xs text-slate-500">{c.category?.name || 'Uncategorized'} · {timeAgo(c.updated_at)}</p>
+                          <p dir="auto" className="max-w-xs truncate font-medium text-slate-900">{c.title}</p>
+                          <p className="text-xs text-slate-500">{c.category?.name || t('teacher.uncategorized')} · {timeAgo(c.updated_at)}</p>
                         </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap">{c.teacher?.full_name}</td>
-                    <td>{c.lessons?.[0]?.count || 0}</td>
-                    <td>{c.enrollments?.[0]?.count || 0}</td>
+                    <td>{t('common.number', { n: c.lessons?.[0]?.count || 0 })}</td>
+                    <td>{t('common.number', { n: c.enrollments?.[0]?.count || 0 })}</td>
                     <td><StatusBadge status={c.status} /></td>
                     <td>
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" title={c.featured ? 'Unfeature' : 'Feature on home page'} onClick={() => update(c, { featured: !c.featured }, c.featured ? 'Removed from featured' : 'Featured on home page')}>
+                        <Button variant="ghost" size="icon" title={c.featured ? t('admin.courses.unfeature') : t('admin.courses.feature')} onClick={() => update(c, { featured: !c.featured }, c.featured ? t('admin.courses.unfeatured') : t('admin.courses.featured'))}>
                           <Star className={cn('h-4 w-4', c.featured && 'fill-amber-400 text-amber-500')} />
                         </Button>
-                        <Button variant="ghost" size="icon" to={`/courses/${c.slug}`} title="Preview"><Eye className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" to={`/teacher/courses/${c.id}`} title="Edit"><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" to={`/courses/${c.slug}`} title={t('courseDetail.preview')}><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" to={`/teacher/courses/${c.id}`} title={t('common.edit')}><Pencil className="h-4 w-4" /></Button>
                         {c.status !== 'published' && c.status !== 'archived' && (
-                          <Button size="sm" onClick={() => update(c, { status: 'published', review_note: null }, 'Course published')}><Send className="h-3.5 w-3.5" /> Publish</Button>
+                          <Button size="sm" onClick={() => update(c, { status: 'published', review_note: null }, t('teacher.editor.published'))}><Send className="h-3.5 w-3.5 rtl:-scale-x-100" /> {t('teacher.editor.publish')}</Button>
                         )}
-                        {c.status === 'pending' && <Button size="sm" variant="secondary" onClick={() => setRejecting(c)}><Undo2 className="h-3.5 w-3.5" /> Return</Button>}
-                        {c.status === 'published' && <Button size="sm" variant="secondary" onClick={() => update(c, { status: 'archived' }, 'Course archived')}><Archive className="h-3.5 w-3.5" /> Archive</Button>}
-                        {c.status === 'archived' && <Button size="sm" variant="secondary" onClick={() => update(c, { status: 'published' }, 'Course restored')}>Restore</Button>}
+                        {c.status === 'pending' && <Button size="sm" variant="secondary" onClick={() => setRejecting(c)}><Undo2 className="h-3.5 w-3.5 rtl:-scale-x-100" /> {t('admin.return')}</Button>}
+                        {c.status === 'published' && <Button size="sm" variant="secondary" onClick={() => update(c, { status: 'archived' }, t('admin.courses.archived'))}><Archive className="h-3.5 w-3.5" /> {t('admin.archive')}</Button>}
+                        {c.status === 'archived' && <Button size="sm" variant="secondary" onClick={() => update(c, { status: 'published' }, t('admin.courses.restored'))}>{t('admin.restore')}</Button>}
                       </div>
                     </td>
                   </tr>
@@ -111,6 +113,7 @@ export default function AdminCourses() {
 
 // Sends content back to draft with a note for the author.
 export function ReturnModal({ item, table, onClose, onDone }) {
+  const { t } = useI18n()
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const submit = async () => {
@@ -118,14 +121,14 @@ export function ReturnModal({ item, table, onClose, onDone }) {
     const { error } = await supabase.from(table).update({ status: 'draft', review_note: note || null }).eq('id', item.id)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success('Returned to author')
+    toast.success(t('admin.returnModal.done'))
     setNote('')
     onClose()
     onDone()
   }
   return (
-    <Modal open={!!item} onClose={onClose} title="Return for changes" description={item?.title} footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button onClick={submit} loading={busy}>Return to author</Button></>}>
-      <Textarea label="Note for the author" rows={4} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Explain what needs to change before this can be published." />
+    <Modal open={!!item} onClose={onClose} title={t('subs.returnForChanges')} description={item?.title} footer={<><Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={submit} loading={busy}>{t('admin.returnModal.submit')}</Button></>}>
+      <Textarea label={t('admin.returnModal.note')} rows={4} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('admin.returnModal.placeholder')} />
     </Modal>
   )
 }

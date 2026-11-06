@@ -9,12 +9,14 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { cn, errorMessage, formatDate, formatDateTime, formatMinutes, timeAgo } from '../../lib/utils'
-import { Logo, Markdown, VideoEmbed } from '../../components/shared'
+import { useI18n } from '../../lib/i18n'
+import { LanguageSwitcher, Logo, Markdown, VideoEmbed } from '../../components/shared'
 import { Badge, Button, Card, EmptyState, Input, PageLoader, ProgressBar, StatusBadge, Textarea } from '../../components/ui'
 
 export default function CoursePlayer() {
   const { slug } = useParams()
   const { user, isAdmin } = useAuth()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -66,7 +68,7 @@ export default function CoursePlayer() {
   if (!data) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
-        <EmptyState title="Course not found" action={<Button to="/student/courses">My courses</Button>} />
+        <EmptyState title={t('player.notFound')} action={<Button to="/student/courses">{t('portalNav.myCourses')}</Button>} />
       </div>
     )
   }
@@ -77,9 +79,9 @@ export default function CoursePlayer() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <EmptyState
-          title="Enroll to start learning"
-          description={`You're not enrolled in "${course.title}" yet. It's free!`}
-          action={<Button to={`/courses/${course.slug}`}>Go to course page</Button>}
+          title={t('player.enrollTitle')}
+          description={t('player.enrollText', { title: course.title })}
+          action={<Button to={`/courses/${course.slug}`}>{t('player.goToCourse')}</Button>}
         />
       </div>
     )
@@ -121,23 +123,23 @@ export default function CoursePlayer() {
   const claim = async () => {
     const { data: cert, error } = await supabase.rpc('claim_certificate', { p_course_id: course.id })
     if (error) return toast.error(errorMessage(error))
-    toast.success('Congratulations! Your certificate is ready.')
+    toast.success(t('player.certReady'))
     navigate(`/certificate/${cert.code}`)
   }
 
   const sidebar = (
     <div className="flex h-full flex-col bg-white">
       <div className="border-b border-slate-200 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Your progress</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('player.progress')}</p>
         <div className="mt-2 flex items-center gap-3">
           <ProgressBar value={percent} />
-          <span className="text-sm font-bold text-slate-800">{percent}%</span>
+          <span className="text-sm font-bold text-slate-800">{t('student.percent', { n: percent })}</span>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 text-xs font-medium">
           {[
-            ['lesson', 'Lessons', PlayCircle],
-            ['assignments', 'Tasks', ClipboardList],
-            ['announcements', 'News', Bell],
+            ['lesson', t('player.tabLessons'), PlayCircle],
+            ['assignments', t('player.tabTasks'), ClipboardList],
+            ['announcements', t('player.tabNews'), Bell],
           ].map(([v, label, Icon]) => (
             <button
               key={v}
@@ -154,9 +156,9 @@ export default function CoursePlayer() {
           const moduleQuizzes = course.quizzes.filter((q) => q.module_id === m.id)
           return (
             <div key={m.id} className="border-b border-slate-100">
-              <button onClick={() => setCollapsed((c) => ({ ...c, [m.id]: !c[m.id] }))} className="flex w-full items-center justify-between gap-3 bg-slate-50 px-5 py-3 text-left">
+              <button onClick={() => setCollapsed((c) => ({ ...c, [m.id]: !c[m.id] }))} className="flex w-full items-center justify-between gap-3 bg-slate-50 px-5 py-3 text-start">
                 <span>
-                  <span className="block text-[11px] font-semibold uppercase text-slate-400">Section {mi + 1}</span>
+                  <span className="block text-[11px] font-semibold uppercase text-slate-400">{t('player.section', { n: mi + 1 })}</span>
                   <span className="block text-sm font-semibold text-slate-800">{m.title}</span>
                 </span>
                 <ChevronDown className={cn('h-4 w-4 shrink-0 text-slate-400 transition', !collapsed[m.id] && 'rotate-180')} />
@@ -166,10 +168,10 @@ export default function CoursePlayer() {
                   {m.lessons.map((l) => (
                     <li key={l.id}>
                       <div className={cn('flex items-start gap-3 px-5 py-3 text-sm', l.id === selectedLessonId && view === 'lesson' ? 'bg-brand-50' : 'hover:bg-slate-50')}>
-                        <button onClick={() => enrolled && toggleDone(l.id)} className="mt-0.5 shrink-0" aria-label="Toggle complete" disabled={!enrolled}>
+                        <button onClick={() => enrolled && toggleDone(l.id)} className="mt-0.5 shrink-0" aria-label={t('player.toggleComplete')} disabled={!enrolled}>
                           {done.has(l.id) ? <CircleCheck className="h-[18px] w-[18px] text-emerald-600" /> : <Circle className="h-[18px] w-[18px] text-slate-300" />}
                         </button>
-                        <button onClick={() => setParams({ lesson: l.id })} className="flex-1 text-left">
+                        <button onClick={() => setParams({ lesson: l.id })} className="flex-1 text-start">
                           <span className={cn('block', l.id === selectedLessonId && view === 'lesson' ? 'font-semibold text-brand-800' : 'text-slate-700')}>{l.title}</span>
                           {l.duration_minutes > 0 && (
                             <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
@@ -190,7 +192,7 @@ export default function CoursePlayer() {
         })}
         {course.quizzes.filter((q) => !q.module_id || !course.modules.some((m) => m.id === q.module_id)).length > 0 && (
           <div className="border-b border-slate-100">
-            <p className="bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-800">Final assessment</p>
+            <p className="bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-800">{t('player.finalAssessment')}</p>
             <ul>
               {course.quizzes
                 .filter((q) => !q.module_id || !course.modules.some((m) => m.id === q.module_id))
@@ -200,8 +202,8 @@ export default function CoursePlayer() {
             </ul>
           </div>
         )}
-        <button onClick={() => setParams({ view: 'certificate' })} className={cn('flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-semibold', view === 'certificate' ? 'bg-amber-50 text-amber-800' : 'text-slate-700 hover:bg-slate-50')}>
-          <Award className={cn('h-5 w-5', complete ? 'text-amber-500' : 'text-slate-300')} /> Certificate
+        <button onClick={() => setParams({ view: 'certificate' })} className={cn('flex w-full items-center gap-3 px-5 py-4 text-start text-sm font-semibold', view === 'certificate' ? 'bg-amber-50 text-amber-800' : 'text-slate-700 hover:bg-slate-50')}>
+          <Award className={cn('h-5 w-5', complete ? 'text-amber-500' : 'text-slate-300')} /> {t('player.certificate')}
         </button>
       </nav>
     </div>
@@ -212,21 +214,22 @@ export default function CoursePlayer() {
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-800 bg-slate-900 px-4 text-white">
         <div className="flex min-w-0 items-center gap-4">
           <Link to="/student/courses" className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-slate-300 hover:bg-white/10 hover:text-white">
-            <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">My courses</span>
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> <span className="hidden sm:inline">{t('portalNav.myCourses')}</span>
           </Link>
           <span className="hidden h-5 w-px bg-slate-700 sm:block" />
-          <p className="truncate text-sm font-semibold">{course.title}</p>
+          <p dir="auto" className="truncate text-sm font-semibold">{course.title}</p>
         </div>
         <div className="flex items-center gap-2">
-          {!enrolled && <Badge tone="amber">Preview mode</Badge>}
+          <LanguageSwitcher light />
+          {!enrolled && <Badge tone="amber">{t('player.previewMode')}</Badge>}
           {certificate ? (
             <Button to={`/certificate/${certificate.code}`} size="sm" variant="accent">
-              <Trophy className="h-4 w-4" /> <span className="hidden sm:inline">Certificate</span>
+              <Trophy className="h-4 w-4" /> <span className="hidden sm:inline">{t('player.certificate')}</span>
             </Button>
           ) : (
-            <span className="hidden text-xs text-slate-400 sm:block">{percent}% complete</span>
+            <span className="hidden text-xs text-slate-400 sm:block">{t('player.percentComplete', { n: percent })}</span>
           )}
-          <button onClick={() => setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-white/10 lg:hidden" aria-label="Course content">
+          <button onClick={() => setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-white/10 lg:hidden" aria-label={t('courseDetail.content')}>
             <Menu className="h-5 w-5" />
           </button>
         </div>
@@ -238,7 +241,7 @@ export default function CoursePlayer() {
             {view === 'lesson' && lesson && (
               <LessonView lesson={lesson} isDone={done.has(lesson.id)} enrolled={enrolled} onToggle={() => toggleDone(lesson.id)} onNext={completeAndNext} onPrev={lessonIndex > 0 ? () => setParams({ lesson: lessons[lessonIndex - 1].id }) : null} hasNext={lessonIndex < lessons.length - 1} />
             )}
-            {view === 'lesson' && !lesson && <EmptyState icon={PlayCircle} title="No lessons yet" description="The teacher is still building this course." />}
+            {view === 'lesson' && !lesson && <EmptyState icon={PlayCircle} title={t('player.noLessons')} description={t('player.noLessonsHint')} />}
             {view === 'quiz' && quiz && <QuizView key={quiz.id} quiz={quiz} enrolled={enrolled} attempts={attempts.filter((a) => a.quiz_id === quiz.id)} onSubmitted={reload} />}
             {view === 'assignments' && <AssignmentsView courseId={course.id} enrolled={enrolled} />}
             {view === 'announcements' && <CourseAnnouncements courseId={course.id} />}
@@ -247,33 +250,35 @@ export default function CoursePlayer() {
                 <div className={cn('mx-auto flex h-20 w-20 items-center justify-center rounded-full', complete ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400')}>
                   <Award className="h-10 w-10" />
                 </div>
-                <h2 className="mt-6 text-2xl font-bold">{certificate ? 'You earned your certificate!' : complete ? 'Course complete. Congratulations!' : 'Keep going!'}</h2>
+                <h2 className="mt-6 text-2xl font-bold">{certificate ? t('player.earned') : complete ? t('player.complete') : t('player.keepGoing')}</h2>
                 <p className="mx-auto mt-2 max-w-md text-slate-600">
                   {complete
-                    ? 'You have completed every lesson and passed every quiz. Claim your verified certificate of completion.'
-                    : `Complete all ${lessons.length} lessons${course.quizzes.length ? ` and pass all ${course.quizzes.length} quizzes` : ''} to unlock your certificate. You're ${percent}% of the way there.`}
+                    ? t('player.completeText')
+                    : course.quizzes.length
+                      ? t('player.unlockWithQuizzes', { lessons: lessons.length, quizzes: course.quizzes.length, percent })
+                      : t('player.unlock', { lessons: lessons.length, percent })}
                 </p>
                 <div className="mx-auto mt-6 max-w-xs">
                   <ProgressBar value={percent} />
                 </div>
                 {certificate ? (
-                  <Button to={`/certificate/${certificate.code}`} className="mt-8" size="lg">View certificate</Button>
+                  <Button to={`/certificate/${certificate.code}`} className="mt-8" size="lg">{t('player.viewCertificate')}</Button>
                 ) : (
-                  complete && enrolled && <Button onClick={claim} className="mt-8" size="lg" variant="accent"><Trophy className="h-5 w-5" /> Claim certificate</Button>
+                  complete && enrolled && <Button onClick={claim} className="mt-8" size="lg" variant="accent"><Trophy className="h-5 w-5" /> {t('player.claim')}</Button>
                 )}
               </Card>
             )}
           </div>
         </main>
 
-        <aside className="hidden w-80 shrink-0 border-l border-slate-200 lg:block">{sidebar}</aside>
+        <aside className="hidden w-80 shrink-0 border-s border-slate-200 lg:block">{sidebar}</aside>
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div className="absolute inset-0 bg-slate-900/50" onClick={() => setSidebarOpen(false)} />
-            <div className="absolute inset-y-0 right-0 flex w-[85%] max-w-sm flex-col shadow-xl">
+            <div className="absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-xl">
               <div className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4">
                 <Logo />
-                <button onClick={() => setSidebarOpen(false)} className="rounded-lg p-2 hover:bg-slate-100" aria-label="Close">
+                <button onClick={() => setSidebarOpen(false)} className="rounded-lg p-2 hover:bg-slate-100" aria-label={t('common.close')}>
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -287,13 +292,14 @@ export default function CoursePlayer() {
 }
 
 function QuizNavItem({ quiz, passed, active, onClick }) {
+  const { t } = useI18n()
   return (
     <li>
-      <button onClick={onClick} className={cn('flex w-full items-center gap-3 px-5 py-3 text-left text-sm', active ? 'bg-brand-50' : 'hover:bg-slate-50')}>
+      <button onClick={onClick} className={cn('flex w-full items-center gap-3 px-5 py-3 text-start text-sm', active ? 'bg-brand-50' : 'hover:bg-slate-50')}>
         {passed ? <CircleCheck className="h-[18px] w-[18px] shrink-0 text-emerald-600" /> : <ListChecks className="h-[18px] w-[18px] shrink-0 text-violet-500" />}
         <span className={cn(active ? 'font-semibold text-brand-800' : 'text-slate-700')}>
           {quiz.title}
-          <span className="block text-xs text-slate-400">Quiz · pass {quiz.pass_percent}%</span>
+          <span className="block text-xs text-slate-400">{t('player.quizPass', { n: quiz.pass_percent })}</span>
         </span>
       </button>
     </li>
@@ -301,17 +307,18 @@ function QuizNavItem({ quiz, passed, active, onClick }) {
 }
 
 function LessonView({ lesson, isDone, enrolled, onToggle, onNext, onPrev, hasNext }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-6">
       {lesson.video_url && <VideoEmbed url={lesson.video_url} title={lesson.title} />}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{lesson.title}</h1>
+          <h1 dir="auto" className="text-2xl font-bold">{lesson.title}</h1>
           {lesson.duration_minutes > 0 && <p className="mt-1 text-sm text-slate-500">{formatMinutes(lesson.duration_minutes)}</p>}
         </div>
         {enrolled && (
           <Button variant={isDone ? 'soft' : 'secondary'} size="sm" onClick={onToggle}>
-            {isDone ? <><CircleCheck className="h-4 w-4" /> Completed</> : <><Circle className="h-4 w-4" /> Mark as complete</>}
+            {isDone ? <><CircleCheck className="h-4 w-4" /> {t('player.completed')}</> : <><Circle className="h-4 w-4" /> {t('player.markComplete')}</>}
           </Button>
         )}
       </div>
@@ -323,13 +330,13 @@ function LessonView({ lesson, isDone, enrolled, onToggle, onNext, onPrev, hasNex
       <div className="flex items-center justify-between border-t border-slate-200 pt-6">
         {onPrev ? (
           <Button variant="ghost" onClick={onPrev}>
-            <ArrowLeft className="h-4 w-4" /> Previous
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t('player.previous')}
           </Button>
         ) : (
           <span />
         )}
         <Button onClick={onNext}>
-          {enrolled && !isDone ? 'Complete & continue' : hasNext ? 'Next lesson' : 'Continue'} <ArrowRight className="h-4 w-4" />
+          {enrolled && !isDone ? t('player.completeContinue') : hasNext ? t('player.nextLesson') : t('player.continue')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
       </div>
     </div>
@@ -337,6 +344,7 @@ function LessonView({ lesson, isDone, enrolled, onToggle, onNext, onPrev, hasNex
 }
 
 function QuizView({ quiz, enrolled, attempts, onSubmitted }) {
+  const { t } = useI18n()
   const { data: questions, loading } = useQuery(
     async () => unwrap(await supabase.from('quiz_questions').select('id, question, options, position').eq('quiz_id', quiz.id).order('position').order('id')),
     [quiz.id],
@@ -350,7 +358,7 @@ function QuizView({ quiz, enrolled, attempts, onSubmitted }) {
   if (loading) return <PageLoader />
 
   const submit = async () => {
-    if (questions.some((q) => answers[q.id] == null)) return toast.error('Please answer every question')
+    if (questions.some((q) => answers[q.id] == null)) return toast.error(t('player.answerAll'))
     setBusy(true)
     const { data, error } = await supabase.rpc('submit_quiz', { p_quiz_id: quiz.id, p_answers: questions.map((q) => answers[q.id]) })
     setBusy(false)
@@ -362,37 +370,37 @@ function QuizView({ quiz, enrolled, attempts, onSubmitted }) {
   return (
     <div className="space-y-6">
       <div>
-        <Badge tone="violet"><ListChecks className="h-3.5 w-3.5" /> Quiz</Badge>
-        <h1 className="mt-3 text-2xl font-bold">{quiz.title}</h1>
+        <Badge tone="violet"><ListChecks className="h-3.5 w-3.5" /> {t('player.quiz')}</Badge>
+        <h1 dir="auto" className="mt-3 text-2xl font-bold">{quiz.title}</h1>
         {quiz.description && <p className="mt-2 text-slate-600">{quiz.description}</p>}
         <p className="mt-2 text-sm text-slate-500">
-          {questions.length} questions · Pass mark {quiz.pass_percent}%{attempts.length > 0 && ` · Best score ${best}%`}
+          {t('player.questionCount', { count: questions.length })} · {t('player.passMark', { n: quiz.pass_percent })}{attempts.length > 0 && ` · ${t('player.bestScore', { n: best })}`}
         </p>
       </div>
 
       {result ? (
         <Card className="p-8 text-center">
           <div className={cn('mx-auto flex h-20 w-20 items-center justify-center rounded-full font-display text-2xl font-bold', result.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')}>
-            {result.percent}%
+            {t('student.percent', { n: result.percent })}
           </div>
-          <h2 className="mt-5 text-xl font-bold">{result.passed ? 'You passed!' : 'Not quite there yet'}</h2>
+          <h2 className="mt-5 text-xl font-bold">{result.passed ? t('player.passed') : t('player.notYet')}</h2>
           <p className="mt-1 text-slate-600">
-            You answered {result.score} of {result.total} questions correctly.
-            {!result.passed && ` You need ${quiz.pass_percent}% to pass. Review the lessons and try again.`}
+            {t('player.answered', { score: result.score, total: result.total })}
+            {!result.passed && ` ${t('player.needToPass', { n: quiz.pass_percent })}`}
           </p>
           <Button variant="secondary" className="mt-6" onClick={() => { setResult(null); setAnswers({}) }}>
-            <RotateCcw className="h-4 w-4" /> Retake quiz
+            <RotateCcw className="h-4 w-4" /> {t('player.retake')}
           </Button>
         </Card>
       ) : questions.length === 0 ? (
-        <EmptyState icon={ListChecks} title="No questions yet" />
+        <EmptyState icon={ListChecks} title={t('player.noQuestions')} />
       ) : (
         <>
-          {passed && <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">You've already passed this quiz. You can retake it anytime to practice.</div>}
+          {passed && <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">{t('player.alreadyPassed')}</div>}
           {questions.map((q, qi) => (
             <Card key={q.id} className="p-6">
-              <p className="font-semibold text-slate-900">
-                <span className="mr-2 text-slate-400">{qi + 1}.</span>
+              <p dir="auto" className="font-semibold text-slate-900">
+                <span className="me-2 text-slate-400">{t('player.questionNumber', { n: qi + 1 })}</span>
                 {q.question}
               </p>
               <div className="mt-4 space-y-2">
@@ -406,9 +414,9 @@ function QuizView({ quiz, enrolled, attempts, onSubmitted }) {
             </Card>
           ))}
           {enrolled ? (
-            <Button size="lg" onClick={submit} loading={busy}>Submit answers</Button>
+            <Button size="lg" onClick={submit} loading={busy}>{t('player.submitAnswers')}</Button>
           ) : (
-            <p className="text-sm text-slate-500">Preview mode: students submit answers here.</p>
+            <p className="text-sm text-slate-500">{t('player.previewQuiz')}</p>
           )}
         </>
       )}
@@ -418,6 +426,7 @@ function QuizView({ quiz, enrolled, attempts, onSubmitted }) {
 
 function AssignmentsView({ courseId, enrolled }) {
   const { user } = useAuth()
+  const { t } = useI18n()
   const { data, loading, reload } = useQuery(async () => {
     const [assignments, submissions] = await Promise.all([
       supabase.from('assignments').select('*').eq('course_id', courseId).order('created_at'),
@@ -430,11 +439,11 @@ function AssignmentsView({ courseId, enrolled }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Assignments</h1>
-        <p className="mt-1 text-sm text-slate-500">Practical tasks reviewed and graded by your teacher.</p>
+        <h1 className="text-2xl font-bold">{t('player.assignments')}</h1>
+        <p className="mt-1 text-sm text-slate-500">{t('player.assignmentsHint')}</p>
       </div>
       {data.assignments.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="No assignments" description="This course doesn't have any assignments yet." />
+        <EmptyState icon={ClipboardList} title={t('player.noAssignments')} description={t('player.noAssignmentsHint')} />
       ) : (
         data.assignments.map((a) => <AssignmentCard key={a.id} assignment={a} submission={data.submissions[a.id]} enrolled={enrolled} onSaved={reload} />)
       )}
@@ -444,6 +453,7 @@ function AssignmentsView({ courseId, enrolled }) {
 
 function AssignmentCard({ assignment, submission, enrolled, onSaved }) {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [editing, setEditing] = useState(!submission)
   const [form, setForm] = useState({ content: submission?.content || '', link_url: submission?.link_url || '' })
   const [busy, setBusy] = useState(false)
@@ -451,13 +461,13 @@ function AssignmentCard({ assignment, submission, enrolled, onSaved }) {
 
   const save = async (e) => {
     e.preventDefault()
-    if (!form.content.trim() && !form.link_url.trim()) return toast.error('Add a response or a link')
+    if (!form.content.trim() && !form.link_url.trim()) return toast.error(t('player.addResponse'))
     setBusy(true)
     const payload = { ...form, assignment_id: assignment.id, course_id: assignment.course_id, student_id: user.id }
     const { error } = submission ? await supabase.from('submissions').update(form).eq('id', submission.id) : await supabase.from('submissions').insert(payload)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success('Submission saved')
+    toast.success(t('player.submissionSaved'))
     setEditing(false)
     onSaved()
   }
@@ -466,10 +476,10 @@ function AssignmentCard({ assignment, submission, enrolled, onSaved }) {
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 p-6">
         <div>
-          <h3 className="text-lg font-semibold">{assignment.title}</h3>
+          <h3 dir="auto" className="text-lg font-semibold">{assignment.title}</h3>
           <p className="mt-1 text-xs text-slate-500">
-            {assignment.max_points} points
-            {assignment.due_date && <> · Due {formatDateTime(assignment.due_date)} {overdue && <span className="font-semibold text-red-600">(past due)</span>}</>}
+            {t('player.points', { count: assignment.max_points })}
+            {assignment.due_date && <> · {t('player.due', { date: formatDateTime(assignment.due_date) })} {overdue && <span className="font-semibold text-red-600">{t('player.pastDue')}</span>}</>}
           </p>
         </div>
         {submission && <StatusBadge status={submission.status} />}
@@ -478,35 +488,35 @@ function AssignmentCard({ assignment, submission, enrolled, onSaved }) {
         {assignment.instructions && <Markdown className="prose-sm">{assignment.instructions}</Markdown>}
         {submission?.status === 'returned' && (
           <div className="rounded-xl bg-amber-50 p-5 ring-1 ring-amber-200">
-            <p className="text-sm font-semibold text-amber-900">Your teacher asked for changes</p>
+            <p className="text-sm font-semibold text-amber-900">{t('player.changesRequested')}</p>
             {submission.feedback && <p className="mt-2 whitespace-pre-line text-sm text-amber-900/80">{submission.feedback}</p>}
           </div>
         )}
         {submission?.status === 'graded' && (
           <div className="rounded-xl bg-emerald-50 p-5 ring-1 ring-emerald-200">
             <p className="text-sm font-semibold text-emerald-900">
-              Grade: {submission.grade}/{assignment.max_points}
+              {t('player.grade', { grade: submission.grade, max: assignment.max_points })}
             </p>
             {submission.feedback && <p className="mt-2 whitespace-pre-line text-sm text-emerald-900/80">{submission.feedback}</p>}
           </div>
         )}
         {submission && !editing && (
           <div className="rounded-xl bg-slate-50 p-5 text-sm">
-            <p className="text-xs font-semibold uppercase text-slate-400">Your submission · {timeAgo(submission.submitted_at)}</p>
-            {submission.content && <p className="mt-2 whitespace-pre-line text-slate-700">{submission.content}</p>}
-            {submission.link_url && <a href={submission.link_url} target="_blank" rel="noreferrer" className="mt-2 block break-all font-medium text-brand-600 hover:underline">{submission.link_url}</a>}
+            <p className="text-xs font-semibold uppercase text-slate-400">{t('player.yourSubmission')} · {timeAgo(submission.submitted_at)}</p>
+            {submission.content && <p dir="auto" className="mt-2 whitespace-pre-line text-slate-700">{submission.content}</p>}
+            {submission.link_url && <a href={submission.link_url} target="_blank" rel="noreferrer" dir="ltr" className="mt-2 block break-all text-start font-medium text-brand-600 hover:underline">{submission.link_url}</a>}
             {submission.status !== 'graded' && enrolled && (
-              <Button variant="secondary" size="sm" className="mt-4" onClick={() => setEditing(true)}>Edit submission</Button>
+              <Button variant="secondary" size="sm" className="mt-4" onClick={() => setEditing(true)}>{t('player.editSubmission')}</Button>
             )}
           </div>
         )}
         {editing && enrolled && (
           <form onSubmit={save} className="space-y-4">
-            <Textarea label="Your response" rows={5} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
-            <Input label="Link to your work (Google Drive, Canva, Behance, etc.)" type="url" placeholder="https://" value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} />
+            <Textarea label={t('player.yourResponse')} rows={5} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
+            <Input label={t('player.linkToWork')} type="url" dir="ltr" placeholder="https://" value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} />
             <div className="flex gap-2">
-              <Button type="submit" loading={busy}>{submission ? 'Update submission' : 'Submit assignment'}</Button>
-              {submission && <Button variant="ghost" type="button" onClick={() => setEditing(false)}>Cancel</Button>}
+              <Button type="submit" loading={busy}>{submission ? t('player.updateSubmission') : t('player.submitAssignment')}</Button>
+              {submission && <Button variant="ghost" type="button" onClick={() => setEditing(false)}>{t('common.cancel')}</Button>}
             </div>
           </form>
         )}
@@ -516,6 +526,7 @@ function AssignmentCard({ assignment, submission, enrolled, onSaved }) {
 }
 
 function CourseAnnouncements({ courseId }) {
+  const { t } = useI18n()
   const { data, loading } = useQuery(
     async () => unwrap(await supabase.from('announcements').select('*, author:profiles!announcements_author_id_fkey(full_name)').eq('course_id', courseId).order('created_at', { ascending: false })),
     [courseId],
@@ -523,15 +534,15 @@ function CourseAnnouncements({ courseId }) {
   if (loading) return <PageLoader />
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Course announcements</h1>
+      <h1 className="text-2xl font-bold">{t('player.courseAnnouncements')}</h1>
       {data.length === 0 ? (
-        <EmptyState icon={Bell} title="No announcements" description="Your teacher hasn't posted any updates yet." />
+        <EmptyState icon={Bell} title={t('player.noAnnouncements')} description={t('player.noAnnouncementsHint')} />
       ) : (
         data.map((a) => (
           <Card key={a.id} className="p-6">
             <p className="text-xs text-slate-500">{a.author?.full_name} · {formatDate(a.created_at)}</p>
-            <h3 className="mt-1 text-lg font-semibold">{a.title}</h3>
-            <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{a.body}</p>
+            <h3 dir="auto" className="mt-1 text-lg font-semibold">{a.title}</h3>
+            <p dir="auto" className="mt-2 whitespace-pre-line text-sm text-slate-700">{a.body}</p>
           </Card>
         ))
       )}

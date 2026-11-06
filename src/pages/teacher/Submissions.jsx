@@ -5,10 +5,12 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { errorMessage, formatDateTime, timeAgo } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { Avatar, Button, Card, EmptyState, Input, Modal, PageHeader, PageLoader, Select, StatusBadge, Tabs, Textarea } from '../../components/ui'
 
 export default function Submissions() {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [tab, setTab] = useState('submitted')
   const [courseFilter, setCourseFilter] = useState('')
   const [grading, setGrading] = useState(null)
@@ -33,12 +35,12 @@ export default function Submissions() {
   return (
     <>
       <PageHeader
-        title="Submissions"
-        description="Review learners' assignments and give feedback."
+        title={t('portalNav.submissions')}
+        description={t('subs.description')}
         actions={
           data.courses.length > 1 && (
             <select className="input w-56" value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)}>
-              <option value="">All courses</option>
+              <option value="">{t('footer.allCourses')}</option>
               {data.courses.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
@@ -51,24 +53,24 @@ export default function Submissions() {
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: 'submitted', label: 'Needs grading', count: count('submitted') },
-          { value: 'graded', label: 'Graded', count: count('graded') },
-          { value: 'all', label: 'All' },
+          { value: 'submitted', label: t('teacher.dash.needsGrading'), count: t('common.number', { n: count('submitted') }) },
+          { value: 'graded', label: t('status.graded'), count: t('common.number', { n: count('graded') }) },
+          { value: 'all', label: t('common.all') },
         ]}
       />
       {list.length === 0 ? (
-        <EmptyState icon={ClipboardList} title={tab === 'submitted' ? 'All caught up!' : 'No submissions'} description="Submissions from your learners will appear here." />
+        <EmptyState icon={ClipboardList} title={tab === 'submitted' ? t('subs.caughtUp') : t('subs.none')} description={t('subs.noneHint')} />
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="table-base">
               <thead>
                 <tr>
-                  <th>Learner</th>
-                  <th>Assignment</th>
-                  <th>Submitted</th>
-                  <th>Status</th>
-                  <th>Grade</th>
+                  <th>{t('studentsTab.learner')}</th>
+                  <th>{t('subs.assignment')}</th>
+                  <th>{t('status.submitted')}</th>
+                  <th>{t('studentsTab.status')}</th>
+                  <th>{t('subs.grade')}</th>
                   <th />
                 </tr>
               </thead>
@@ -82,15 +84,15 @@ export default function Submissions() {
                       </div>
                     </td>
                     <td>
-                      <p className="font-medium text-slate-800">{s.assignment?.title}</p>
+                      <p dir="auto" className="font-medium text-slate-800">{s.assignment?.title}</p>
                       <p className="text-xs text-slate-500">{s.course?.title}</p>
                     </td>
                     <td className="whitespace-nowrap text-slate-500">{timeAgo(s.submitted_at)}</td>
                     <td><StatusBadge status={s.status} /></td>
-                    <td className="whitespace-nowrap">{s.grade != null ? `${s.grade}/${s.assignment?.max_points}` : '—'}</td>
-                    <td className="text-right">
+                    <td className="whitespace-nowrap">{s.grade != null ? t('subs.score', { grade: s.grade, max: s.assignment?.max_points }) : '—'}</td>
+                    <td className="text-end">
                       <Button size="sm" variant={s.status === 'submitted' ? 'primary' : 'secondary'} onClick={() => setGrading(s)}>
-                        {s.status === 'submitted' ? 'Grade' : 'Review'}
+                        {s.status === 'submitted' ? t('subs.gradeAction') : t('subs.review')}
                       </Button>
                     </td>
                   </tr>
@@ -107,6 +109,7 @@ export default function Submissions() {
 
 function GradeModal({ submission, onClose, onSaved }) {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [form, setForm] = useState({ grade: '', feedback: '', status: 'graded' })
   const [busy, setBusy] = useState(false)
   const [last, setLast] = useState(null)
@@ -120,7 +123,7 @@ function GradeModal({ submission, onClose, onSaved }) {
   const save = async (e) => {
     e.preventDefault()
     const grade = form.status === 'graded' ? parseInt(form.grade, 10) : null
-    if (form.status === 'graded' && (Number.isNaN(grade) || grade < 0 || grade > max)) return toast.error(`Grade must be between 0 and ${max}`)
+    if (form.status === 'graded' && (Number.isNaN(grade) || grade < 0 || grade > max)) return toast.error(t('subs.gradeRange', { max }))
     setBusy(true)
     const { error } = await supabase
       .from('submissions')
@@ -128,7 +131,7 @@ function GradeModal({ submission, onClose, onSaved }) {
       .eq('id', submission.id)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success(form.status === 'graded' ? 'Grade saved' : 'Returned to learner for changes')
+    toast.success(form.status === 'graded' ? t('subs.gradeSaved') : t('subs.returned'))
     onClose()
     onSaved()
   }
@@ -139,28 +142,28 @@ function GradeModal({ submission, onClose, onSaved }) {
       onClose={onClose}
       size="lg"
       title={submission.assignment?.title}
-      description={`${submission.student?.full_name} · submitted ${formatDateTime(submission.submitted_at)}`}
-      footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" form="grade-form" loading={busy}>Save</Button></>}
+      description={t('subs.modalDescription', { name: submission.student?.full_name, date: formatDateTime(submission.submitted_at) })}
+      footer={<><Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button><Button type="submit" form="grade-form" loading={busy}>{t('common.save')}</Button></>}
     >
       <div className="space-y-5">
         <div className="rounded-xl bg-slate-50 p-4 text-sm">
-          <p className="text-xs font-semibold uppercase text-slate-400">Learner's submission</p>
-          {submission.content && <p className="mt-2 whitespace-pre-line text-slate-800">{submission.content}</p>}
+          <p className="text-xs font-semibold uppercase text-slate-400">{t('subs.learnerSubmission')}</p>
+          {submission.content && <p dir="auto" className="mt-2 whitespace-pre-line text-slate-800">{submission.content}</p>}
           {submission.link_url && (
-            <a href={submission.link_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 break-all font-medium text-brand-600 hover:underline">
+            <a href={submission.link_url} target="_blank" rel="noreferrer" dir="ltr" className="mt-2 inline-flex items-center gap-1 break-all font-medium text-brand-600 hover:underline">
               {submission.link_url} <ExternalLink className="h-3.5 w-3.5 shrink-0" />
             </a>
           )}
         </div>
         <form id="grade-form" onSubmit={save} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Select label="Outcome" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option value="graded">Grade submission</option>
-              <option value="returned">Return for changes</option>
+            <Select label={t('subs.outcome')} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <option value="graded">{t('subs.gradeSubmission')}</option>
+              <option value="returned">{t('subs.returnForChanges')}</option>
             </Select>
-            {form.status === 'graded' && <Input label={`Grade (out of ${max})`} type="number" min={0} max={max} required value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })} />}
+            {form.status === 'graded' && <Input label={t('subs.gradeOutOf', { max })} type="number" min={0} max={max} required value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })} />}
           </div>
-          <Textarea label="Feedback" rows={5} value={form.feedback} onChange={(e) => setForm({ ...form, feedback: e.target.value })} placeholder="What went well, and what could be improved?" />
+          <Textarea label={t('subs.feedback')} rows={5} value={form.feedback} onChange={(e) => setForm({ ...form, feedback: e.target.value })} placeholder={t('subs.feedbackPlaceholder')} />
         </form>
       </div>
     </Modal>

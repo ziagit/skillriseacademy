@@ -2,27 +2,29 @@ import { BookOpen, Building2, Copy, ExternalLink, GraduationCap, Heart, Server, 
 import toast from 'react-hot-toast'
 import { useSettings } from '../../context/SettingsContext'
 import { Button } from '../../components/ui'
+import { useI18n } from '../../lib/i18n'
 import { PageHero } from './About'
 
 export default function Donate() {
   const { settings } = useSettings()
+  const { t } = useI18n()
   const impact = [
-    { icon: Server, title: 'Keep the platform running', text: 'Hosting, video delivery and security for thousands of learners.' },
-    { icon: BookOpen, title: 'Create new courses', text: 'Support teachers to produce high-quality lessons in new skill areas.' },
-    { icon: Users, title: 'Reach more learners', text: 'Outreach to communities that need free education the most.' },
-    { icon: GraduationCap, title: 'Fund certificates & mentoring', text: 'Help learners turn skills into jobs and freelance income.' },
+    { icon: Server, title: t('donate.i1Title'), text: t('donate.i1Text') },
+    { icon: BookOpen, title: t('donate.i2Title'), text: t('donate.i2Text') },
+    { icon: Users, title: t('donate.i3Title'), text: t('donate.i3Text') },
+    { icon: GraduationCap, title: t('donate.i4Title'), text: t('donate.i4Text') },
   ]
 
   return (
     <>
       <PageHero
-        eyebrow="Support our mission"
-        title="Your gift keeps learning free"
-        description="SkillRise Academy is a non-profit. Every course is free because donors like you believe everyone deserves the chance to learn."
+        eyebrow={t('footer.support')}
+        title={t('donate.title')}
+        description={t('donate.description')}
       />
       <section className="container-page grid gap-10 py-16 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <h2 className="text-2xl font-bold">Where your donation goes</h2>
+          <h2 className="text-2xl font-bold">{t('donate.where')}</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {impact.map((i) => (
               <div key={i.title} className="rounded-2xl border border-slate-200 p-6">
@@ -35,9 +37,9 @@ export default function Donate() {
             ))}
           </div>
           <div className="mt-8 rounded-2xl bg-slate-50 p-6 text-sm text-slate-600">
-            <p className="font-semibold text-slate-900">Other ways to give</p>
+            <p className="font-semibold text-slate-900">{t('donate.otherWays')}</p>
             <p className="mt-1">
-              Volunteer as a teacher, sponsor a course, or partner with us as an organization. <a href="/contact" className="font-semibold text-brand-600 hover:underline">Get in touch</a>.
+              {t('donate.otherWaysText')} <a href="/contact" className="font-semibold text-brand-600 hover:underline">{t('footer.getInTouch')}</a>{t('home.faq.period')}
             </p>
           </div>
         </div>
@@ -46,35 +48,35 @@ export default function Donate() {
           <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-200 shadow-xl">
             <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-7 text-white">
               <Heart className="h-8 w-8" fill="currentColor" />
-              <h3 className="mt-4 text-2xl font-bold text-white">Make a donation</h3>
-              <p className="mt-1 text-rose-100">Every amount helps a learner rise.</p>
+              <h3 className="mt-4 text-2xl font-bold text-white">{t('donate.make')}</h3>
+              <p className="mt-1 text-rose-100">{t('donate.everyAmount')}</p>
             </div>
             <div className="space-y-6 p-7">
               {settings.donate_url ? (
                 <Button href={settings.donate_url} target="_blank" rel="noreferrer" size="lg" className="w-full bg-rose-600 hover:bg-rose-700">
-                  Donate securely <ExternalLink className="h-4 w-4" />
+                  {t('donate.secure')} <ExternalLink className="h-4 w-4" />
                 </Button>
               ) : (
-                !settings.donate_bank_details && <p className="text-sm text-slate-500">Online donations are coming soon. Please contact us to give today.</p>
+                !settings.donate_bank_details && <p className="text-sm text-slate-500">{t('donate.comingSoon')}</p>
               )}
               {settings.donate_bank_details && (
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                    <Building2 className="h-4 w-4" /> Bank transfer
+                    <Building2 className="h-4 w-4" /> {t('donate.bank')}
                   </p>
-                  <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 font-sans text-sm text-slate-700 ring-1 ring-slate-200">{settings.donate_bank_details}</pre>
+                  <pre dir="auto" className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 font-sans text-sm text-slate-700 ring-1 ring-slate-200">{settings.donate_bank_details}</pre>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="mt-2"
-                    onClick={() => navigator.clipboard.writeText(settings.donate_bank_details).then(() => toast.success('Copied'))}
+                    onClick={() => navigator.clipboard.writeText(settings.donate_bank_details).then(() => toast.success(t('common.copied')))}
                   >
-                    <Copy className="h-4 w-4" /> Copy details
+                    <Copy className="h-4 w-4" /> {t('donate.copy')}
                   </Button>
                 </div>
               )}
               <p className="text-xs text-slate-500">
-                Questions about donating? Email <a href={`mailto:${settings.contact_email}`} className="font-medium text-brand-600">{settings.contact_email}</a>
+                {t('donate.questions')} <a href={`mailto:${settings.contact_email}`} dir="ltr" className="font-medium text-brand-600">{settings.contact_email}</a>
               </p>
             </div>
           </div>

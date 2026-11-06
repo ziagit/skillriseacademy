@@ -3,10 +3,12 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { supabase, uploadMedia } from '../../lib/supabase'
 import { errorMessage } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { Avatar, Button, Card, CardHeader, Input, PageHeader, Textarea } from '../../components/ui'
 
 export default function ProfileSettings() {
   const { user, profile, refreshProfile, isTeacher } = useAuth()
+  const { t } = useI18n()
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
     headline: profile?.headline || '',
@@ -27,7 +29,7 @@ export default function ProfileSettings() {
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
     await refreshProfile()
-    toast.success('Profile updated')
+    toast.success(t('profile.updated'))
   }
 
   const uploadAvatar = async (e) => {
@@ -46,60 +48,60 @@ export default function ProfileSettings() {
 
   const changePassword = async (e) => {
     e.preventDefault()
-    if (password.length < 8) return toast.error('Password must be at least 8 characters')
+    if (password.length < 8) return toast.error(t('auth.errors.passwordLength'))
     setPwBusy(true)
     const { error } = await supabase.auth.updateUser({ password })
     setPwBusy(false)
     if (error) return toast.error(errorMessage(error))
     setPassword('')
-    toast.success('Password changed')
+    toast.success(t('profile.passwordChanged'))
   }
 
   return (
     <>
-      <PageHeader title="Profile settings" description="Manage how you appear on SkillRise Academy." />
+      <PageHeader title={t('portalNav.profileSettings')} description={t('profile.description')} />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="Public profile" description={isTeacher ? 'Shown on your courses and blog posts.' : 'Your name appears on certificates.'} />
+          <CardHeader title={t('profile.public')} description={isTeacher ? t('profile.publicTeacher') : t('profile.publicStudent')} />
           <form onSubmit={save} className="space-y-5 p-5">
             <div className="flex items-center gap-4">
               <Avatar src={form.avatar_url} name={form.full_name} size="xl" />
               <div className="space-y-2">
                 <label className="inline-flex cursor-pointer items-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-                  {uploading ? 'Uploading…' : 'Change photo'}
+                  {uploading ? t('upload.uploading') : t('profile.changePhoto')}
                   <input type="file" accept="image/*" className="hidden" onChange={uploadAvatar} />
                 </label>
                 {form.avatar_url && (
                   <button type="button" onClick={() => setForm({ ...form, avatar_url: '' })} className="block text-xs font-medium text-red-600 hover:underline">
-                    Remove photo
+                    {t('profile.removePhoto')}
                   </button>
                 )}
               </div>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Input label="Full name" required value={form.full_name} onChange={set('full_name')} />
-              <Input label="Country" value={form.country} onChange={set('country')} />
+              <Input label={t('contact.fullName')} required value={form.full_name} onChange={set('full_name')} />
+              <Input label={t('profile.country')} value={form.country} onChange={set('country')} />
             </div>
-            <Input label="Headline" placeholder="e.g. Senior Graphic Designer at Studio X" value={form.headline} onChange={set('headline')} />
-            <Textarea label="Bio" rows={5} value={form.bio} onChange={set('bio')} />
-            <Button type="submit" loading={busy}>Save changes</Button>
+            <Input label={t('profile.headline')} placeholder={t('profile.headlinePlaceholder')} value={form.headline} onChange={set('headline')} />
+            <Textarea label={t('profile.bio')} rows={5} value={form.bio} onChange={set('bio')} />
+            <Button type="submit" loading={busy}>{t('common.saveChanges')}</Button>
           </form>
         </Card>
         <div className="space-y-6">
           <Card>
-            <CardHeader title="Account" />
+            <CardHeader title={t('profile.account')} />
             <div className="space-y-1 p-5 text-sm">
-              <p className="text-slate-500">Email</p>
-              <p className="font-medium text-slate-900">{user.email}</p>
-              <p className="pt-3 text-slate-500">Role</p>
-              <p className="font-medium capitalize text-slate-900">{profile?.role}</p>
+              <p className="text-slate-500">{t('auth.email')}</p>
+              <p dir="ltr" className="text-start font-medium text-slate-900">{user.email}</p>
+              <p className="pt-3 text-slate-500">{t('profile.role')}</p>
+              <p className="font-medium capitalize text-slate-900">{profile?.role && t(`roles.${profile.role}`)}</p>
             </div>
           </Card>
           <Card>
-            <CardHeader title="Change password" />
+            <CardHeader title={t('profile.changePassword')} />
             <form onSubmit={changePassword} className="space-y-4 p-5">
-              <Input label="New password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              <Button type="submit" variant="secondary" loading={pwBusy}>Update password</Button>
+              <Input label={t('auth.reset.newPassword')} type="password" dir="ltr" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Button type="submit" variant="secondary" loading={pwBusy}>{t('auth.reset.submit')}</Button>
             </form>
           </Card>
         </div>

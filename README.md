@@ -73,6 +73,7 @@ The keys are in Supabase under **Project Settings → API**. Never put the `serv
 - **Images** (avatars, thumbnails, blog covers) go to the public `media` storage bucket, max 5 MB each. Each user can only write to their own folder.
 - **Lesson content** is readable by anyone who can see a published course, because all courses are free. The app still requires enrollment to use the course player and track progress.
 - **Assignments** accept text plus a link (Google Drive, Canva, Behance…) rather than file uploads.
+- **Languages**: the interface is available in English and Persian (فارسی, right-to-left). Visitors switch with the language button in the header; the choice is saved in their browser, and a first visit follows the browser's language. UI strings live in `src/locales/<lang>/`, and components read them with `const { t } = useI18n()` from `src/lib/i18n.jsx`. To add a language, copy `src/locales/en/`, translate it, and register it in `LANGUAGES`. Course, blog and category content is stored as teachers write it and is not translated.
 
 ## Project structure
 
@@ -81,7 +82,8 @@ src/
   components/      shared UI (buttons, modals, cards…) and app components
   context/         auth + site settings providers
   layouts/         public site layout, dashboard layout
-  lib/             supabase client, helpers, data hooks
+  lib/             supabase client, helpers, data hooks, i18n
+  locales/         UI strings per language (en, fa)
   pages/
     public/        marketing site, catalog, blog, certificate
     auth/          login, sign-up, password reset

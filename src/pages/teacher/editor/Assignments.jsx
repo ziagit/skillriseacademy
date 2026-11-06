@@ -4,6 +4,7 @@ import { ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { unwrap, useQuery } from '../../../lib/useQuery'
 import { errorMessage, formatDateTime } from '../../../lib/utils'
+import { useI18n } from '../../../lib/i18n'
 import { useConfirm } from '../../../components/shared'
 import { Badge, Button, Card, EmptyState, Input, Modal, PageLoader, Textarea } from '../../../components/ui'
 
@@ -15,6 +16,7 @@ const toLocalInput = (iso) => {
 }
 
 export default function Assignments({ courseId }) {
+  const { t } = useI18n()
   const confirm = useConfirm()
   const [modal, setModal] = useState(null)
   const { data, loading, reload } = useQuery(
@@ -23,7 +25,7 @@ export default function Assignments({ courseId }) {
   )
 
   const remove = async (a) => {
-    if (!(await confirm({ title: 'Delete assignment?', message: `"${a.title}" and all learner submissions will be deleted.`, danger: true, confirmLabel: 'Delete' }))) return
+    if (!(await confirm({ title: t('assignEd.deleteTitle'), message: t('assignEd.deleteMessage', { title: a.title }), danger: true, confirmLabel: t('common.delete') }))) return
     const { error } = await supabase.from('assignments').delete().eq('id', a.id)
     if (error) return toast.error(errorMessage(error))
     reload()
@@ -33,11 +35,11 @@ export default function Assignments({ courseId }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">Practical tasks learners submit for you to grade. Grade them from the Submissions page.</p>
-        <Button onClick={() => setModal({})}><Plus className="h-4 w-4" /> New assignment</Button>
+        <p className="text-sm text-slate-500">{t('assignEd.intro')}</p>
+        <Button onClick={() => setModal({})}><Plus className="h-4 w-4" /> {t('assignEd.new')}</Button>
       </div>
       {data.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="No assignments yet" description="Assignments help learners practise and get feedback from you." action={<Button onClick={() => setModal({})}>Create assignment</Button>} />
+        <EmptyState icon={ClipboardList} title={t('assignEd.empty')} description={t('assignEd.emptyHint')} action={<Button onClick={() => setModal({})}>{t('assignEd.create')}</Button>} />
       ) : (
         <Card>
           <ul className="divide-y divide-slate-100">
@@ -47,14 +49,14 @@ export default function Assignments({ courseId }) {
                   <ClipboardList className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-900">{a.title}</p>
+                  <p dir="auto" className="font-medium text-slate-900">{a.title}</p>
                   <p className="text-xs text-slate-500">
-                    {a.max_points} points{a.due_date && ` · Due ${formatDateTime(a.due_date)}`}
+                    {t('player.points', { count: a.max_points })}{a.due_date && ` · ${t('player.due', { date: formatDateTime(a.due_date) })}`}
                   </p>
                 </div>
-                <Badge>{a.submissions?.[0]?.count || 0} submissions</Badge>
-                <Button variant="ghost" size="icon" onClick={() => setModal(a)} aria-label="Edit"><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="hover:text-red-600" onClick={() => remove(a)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
+                <Badge>{t('assignEd.submissionCount', { count: a.submissions?.[0]?.count || 0 })}</Badge>
+                <Button variant="ghost" size="icon" onClick={() => setModal(a)} aria-label={t('common.edit')}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="hover:text-red-600" onClick={() => remove(a)} aria-label={t('common.delete')}><Trash2 className="h-4 w-4" /></Button>
               </li>
             ))}
           </ul>
@@ -66,6 +68,7 @@ export default function Assignments({ courseId }) {
 }
 
 function AssignmentModal({ state, courseId, onClose, onSaved }) {
+  const { t } = useI18n()
   const [form, setForm] = useState({})
   const [busy, setBusy] = useState(false)
   const [lastState, setLastState] = useState(null)
@@ -87,13 +90,13 @@ function AssignmentModal({ state, courseId, onClose, onSaved }) {
   }
 
   return (
-    <Modal open={!!state} onClose={onClose} size="lg" title={state?.id ? 'Edit assignment' : 'New assignment'} footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" form="assignment-form" loading={busy}>Save</Button></>}>
+    <Modal open={!!state} onClose={onClose} size="lg" title={state?.id ? t('assignEd.edit') : t('assignEd.new')} footer={<><Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button><Button type="submit" form="assignment-form" loading={busy}>{t('common.save')}</Button></>}>
       <form id="assignment-form" onSubmit={save} className="space-y-4">
-        <Input label="Title" required value={form.title} onChange={set('title')} placeholder="e.g. Design a logo for a local bakery" />
-        <Textarea label="Instructions" rows={7} hint="Markdown supported. Explain what to submit and how it will be graded." value={form.instructions} onChange={set('instructions')} />
+        <Input label={t('teacher.title')} required value={form.title} onChange={set('title')} placeholder={t('assignEd.titlePlaceholder')} />
+        <Textarea label={t('quizEd.instructions')} rows={7} hint={t('assignEd.instructionsHint')} value={form.instructions} onChange={set('instructions')} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Max points" type="number" min={1} value={form.max_points} onChange={set('max_points')} />
-          <Input label="Due date (optional)" type="datetime-local" value={form.due_date} onChange={set('due_date')} />
+          <Input label={t('assignEd.maxPoints')} type="number" min={1} value={form.max_points} onChange={set('max_points')} />
+          <Input label={t('assignEd.dueDate')} type="datetime-local" value={form.due_date} onChange={set('due_date')} />
         </div>
       </form>
     </Modal>

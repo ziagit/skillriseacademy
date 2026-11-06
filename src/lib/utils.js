@@ -1,3 +1,5 @@
+import { getLocale, t } from './i18n'
+
 export function cn(...classes) {
   return classes.flat().filter(Boolean).join(' ')
 }
@@ -19,12 +21,12 @@ export function uniqueSlug(text) {
 
 export function formatDate(value, opts = { month: 'short', day: 'numeric', year: 'numeric' }) {
   if (!value) return '—'
-  return new Date(value).toLocaleDateString('en-US', opts)
+  return new Date(value).toLocaleDateString(getLocale(), opts)
 }
 
 export function formatDateTime(value) {
   if (!value) return '—'
-  return new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  return new Date(value).toLocaleString(getLocale(), { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 export function timeAgo(value) {
@@ -38,11 +40,12 @@ export function timeAgo(value) {
     ['hour', 3600],
     ['minute', 60],
   ]
+  const rtf = new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' })
   for (const [unit, size] of units) {
     const n = Math.floor(seconds / size)
-    if (n >= 1) return `${n} ${unit}${n > 1 ? 's' : ''} ago`
+    if (n >= 1) return rtf.format(-n, unit)
   }
-  return 'just now'
+  return t('time.justNow')
 }
 
 export function initials(name = '') {
@@ -55,22 +58,19 @@ export function initials(name = '') {
 }
 
 export function formatMinutes(total) {
-  if (!total) return '0m'
+  if (!total) return t('time.minutesShort', { m: 0 })
   const h = Math.floor(total / 60)
   const m = total % 60
-  return h ? `${h}h${m ? ` ${m}m` : ''}` : `${m}m`
+  if (!h) return t('time.minutesShort', { m })
+  return m ? t('time.hoursMinutesShort', { h, m }) : t('time.hoursShort', { h })
 }
 
 export function formatNumber(n) {
-  return new Intl.NumberFormat('en-US', { notation: n >= 10000 ? 'compact' : 'standard' }).format(n || 0)
+  return new Intl.NumberFormat(getLocale(), { notation: n >= 10000 ? 'compact' : 'standard' }).format(n || 0)
 }
 
-export const LEVELS = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-  all_levels: 'All levels',
-}
+export const LEVEL_KEYS = ['beginner', 'intermediate', 'advanced', 'all_levels']
+export const levelLabel = (level) => (level ? t(`levels.${level}`) : '')
 
 // Converts YouTube / Vimeo share links into embeddable player URLs.
 export function toEmbedUrl(url) {
@@ -96,6 +96,6 @@ export function toEmbedUrl(url) {
 }
 
 export function errorMessage(error) {
-  if (!error) return 'Something went wrong'
+  if (!error) return t('errors.generic')
   return error.message || error.error_description || String(error)
 }

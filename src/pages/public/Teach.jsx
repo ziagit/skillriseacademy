@@ -6,27 +6,29 @@ import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { errorMessage, formatDate } from '../../lib/utils'
 import { Button, Input, StatusBadge, Textarea } from '../../components/ui'
+import { useI18n } from '../../lib/i18n'
 import { PageHero } from './About'
 
 export default function Teach() {
   const { user, isTeacher } = useAuth()
+  const { t } = useI18n()
   const perks = [
-    { icon: Users, title: 'Reach thousands', text: 'Teach motivated learners from around the world.' },
-    { icon: Presentation, title: 'Simple course builder', text: 'Add modules, video lessons, quizzes and assignments in minutes.' },
-    { icon: PenLine, title: 'Write on our blog', text: 'Share your expertise and build your personal brand.' },
-    { icon: HeartHandshake, title: 'Make real impact', text: 'Help people land jobs, freelance clients and start businesses.' },
+    { icon: Users, title: t('teach.p1Title'), text: t('teach.p1Text') },
+    { icon: Presentation, title: t('teach.p2Title'), text: t('teach.p2Text') },
+    { icon: PenLine, title: t('teach.p3Title'), text: t('teach.p3Text') },
+    { icon: HeartHandshake, title: t('teach.p4Title'), text: t('teach.p4Text') },
   ]
-  const steps = ['Apply with your expertise', 'Our team reviews your application', 'Build your course with our tools', 'Submit for review and go live']
+  const steps = t('teach.steps')
 
   return (
     <>
       <PageHero
-        eyebrow="Teach on SkillRise"
-        title="Volunteer your skills. Change lives."
-        description="Join a community of professionals giving back by teaching free courses to learners who need them most."
+        eyebrow={t('teach.eyebrow')}
+        title={t('teach.title')}
+        description={t('teach.description')}
       >
         <div className="mt-8 flex justify-center gap-3">
-          <Button href="#apply" size="lg">Apply to teach <ArrowRight className="h-5 w-5" /></Button>
+          <Button href="#apply" size="lg">{t('teach.apply')} <ArrowRight className="h-5 w-5 rtl:-scale-x-100" /></Button>
         </div>
       </PageHero>
 
@@ -45,11 +47,11 @@ export default function Teach() {
       <section className="bg-slate-50 py-16">
         <div className="container-page grid gap-12 lg:grid-cols-2">
           <div>
-            <h2 className="text-3xl font-bold">How it works</h2>
+            <h2 className="text-3xl font-bold">{t('home.how.eyebrow')}</h2>
             <ol className="mt-8 space-y-6">
               {steps.map((s, i) => (
                 <li key={s} className="flex items-center gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 font-display font-bold text-white">{i + 1}</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 font-display font-bold text-white">{t('common.number', { n: i + 1 })}</span>
                   <span className="font-medium text-slate-800">{s}</span>
                 </li>
               ))}
@@ -57,25 +59,25 @@ export default function Teach() {
             <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
               <Megaphone className="h-6 w-6 text-amber-500" />
               <p className="mt-3 text-sm text-slate-600">
-                We welcome teachers in AI, graphic design, digital marketing, content creation, journalism, computer skills, English, e-commerce, painting, freelancing and more.
+                {t('teach.welcome')}
               </p>
             </div>
           </div>
           <div id="apply" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
             {!user ? (
               <div className="py-6 text-center">
-                <h3 className="text-xl font-bold">Ready to apply?</h3>
-                <p className="mt-2 text-slate-600">Create a free account and tell us about your expertise. It only takes two minutes.</p>
+                <h3 className="text-xl font-bold">{t('teach.ready')}</h3>
+                <p className="mt-2 text-slate-600">{t('teach.readyText')}</p>
                 <div className="mt-6 flex justify-center gap-3">
-                  <Button to="/signup?teach=1">Create account &amp; apply</Button>
-                  <Button to="/login" state={{ from: '/teach' }} variant="secondary">Log in</Button>
+                  <Button to="/signup?teach=1">{t('teach.createAndApply')}</Button>
+                  <Button to="/login" state={{ from: '/teach' }} variant="secondary">{t('nav.login')}</Button>
                 </div>
               </div>
             ) : isTeacher ? (
               <div className="py-6 text-center">
                 <CircleCheck className="mx-auto h-12 w-12 text-emerald-500" />
-                <h3 className="mt-4 text-xl font-bold">You're already a teacher</h3>
-                <Button to="/teacher/courses" className="mt-6">Go to my courses</Button>
+                <h3 className="mt-4 text-xl font-bold">{t('teach.already')}</h3>
+                <Button to="/teacher/courses" className="mt-6">{t('teach.goToCourses')}</Button>
               </div>
             ) : (
               <ApplicationForm userId={user.id} />
@@ -88,6 +90,7 @@ export default function Teach() {
 }
 
 function ApplicationForm({ userId }) {
+  const { t } = useI18n()
   const [form, setForm] = useState({ expertise: '', experience: '', portfolio_url: '', motivation: '' })
   const [busy, setBusy] = useState(false)
   const { data: existing, loading, reload } = useQuery(
@@ -101,8 +104,8 @@ function ApplicationForm({ userId }) {
     return (
       <div className="py-6 text-center">
         <Clock className="mx-auto h-12 w-12 text-amber-500" />
-        <h3 className="mt-4 text-xl font-bold">Application received</h3>
-        <p className="mt-2 text-slate-600">Submitted {formatDate(existing.created_at)}. We'll notify you once it has been reviewed.</p>
+        <h3 className="mt-4 text-xl font-bold">{t('teach.received')}</h3>
+        <p className="mt-2 text-slate-600">{t('teach.receivedText', { date: formatDate(existing.created_at) })}</p>
         <div className="mt-4"><StatusBadge status={existing.status} /></div>
       </div>
     )
@@ -114,21 +117,21 @@ function ApplicationForm({ userId }) {
     const { error } = await supabase.from('teacher_applications').insert({ ...form, user_id: userId })
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success('Application submitted!')
+    toast.success(t('teach.submitted'))
     reload()
   }
 
   return (
     <form onSubmit={submit} className="space-y-5">
       <div>
-        <h3 className="text-xl font-bold">Teacher application</h3>
-        {existing?.status === 'rejected' && <p className="mt-1 text-sm text-amber-700">Your previous application wasn't approved. You're welcome to apply again.</p>}
+        <h3 className="text-xl font-bold">{t('teach.formTitle')}</h3>
+        {existing?.status === 'rejected' && <p className="mt-1 text-sm text-amber-700">{t('teach.rejectedBefore')}</p>}
       </div>
-      <Input label="Area of expertise" required placeholder="e.g. Graphic design, Amazon FBA, IELTS English" value={form.expertise} onChange={set('expertise')} />
-      <Textarea label="Professional experience" rows={4} placeholder="Tell us about your background and work experience" value={form.experience} onChange={set('experience')} />
-      <Input label="Portfolio or LinkedIn URL" type="url" placeholder="https://" value={form.portfolio_url} onChange={set('portfolio_url')} />
-      <Textarea label="Why do you want to teach with SkillRise?" rows={3} value={form.motivation} onChange={set('motivation')} />
-      <Button type="submit" loading={busy} className="w-full" size="lg">Submit application</Button>
+      <Input label={t('teach.expertise')} required placeholder={t('teach.expertisePlaceholder')} value={form.expertise} onChange={set('expertise')} />
+      <Textarea label={t('teach.experience')} rows={4} placeholder={t('teach.experiencePlaceholder')} value={form.experience} onChange={set('experience')} />
+      <Input label={t('teach.portfolio')} type="url" dir="ltr" placeholder="https://" value={form.portfolio_url} onChange={set('portfolio_url')} />
+      <Textarea label={t('teach.motivation')} rows={3} value={form.motivation} onChange={set('motivation')} />
+      <Button type="submit" loading={busy} className="w-full" size="lg">{t('teach.submit')}</Button>
     </form>
   )
 }

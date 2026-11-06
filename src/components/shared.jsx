@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { uploadMedia } from '../lib/supabase'
-import { cn, errorMessage, formatMinutes, LEVELS, toEmbedUrl } from '../lib/utils'
+import { cn, errorMessage, formatMinutes, levelLabel, toEmbedUrl } from '../lib/utils'
+import { LANGUAGES, useI18n } from '../lib/i18n'
 import { Avatar, Badge, Button, Modal, PageLoader } from './ui'
 
 export function Logo({ className, light = false }) {
@@ -27,6 +28,30 @@ export function Logo({ className, light = false }) {
         <span className={cn('block text-[10px] font-semibold uppercase tracking-[0.22em]', light ? 'text-brand-200' : 'text-brand-600')}>Academy</span>
       </span>
     </Link>
+  )
+}
+
+// Cycles to the next language; with two languages it reads as "switch to فارسی / English".
+export function LanguageSwitcher({ className, light = false }) {
+  const { lang, setLang, t } = useI18n()
+  const codes = Object.keys(LANGUAGES)
+  const next = codes[(codes.indexOf(lang) + 1) % codes.length]
+  return (
+    <button
+      type="button"
+      onClick={() => setLang(next)}
+      lang={next}
+      title={t('common.switchLanguage')}
+      aria-label={`${t('common.switchLanguage')}: ${LANGUAGES[next].label}`}
+      className={cn(
+        'inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition',
+        light ? 'text-slate-300 hover:bg-white/10 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+        className,
+      )}
+    >
+      <Languages className="h-4 w-4" />
+      {LANGUAGES[next].label}
+    </button>
   )
 }
 
@@ -73,6 +98,7 @@ export function CourseThumbnail({ course, className }) {
 }
 
 export function CourseCard({ course, students }) {
+  const { t } = useI18n()
   const lessons = course.lessons ?? []
   const minutes = lessons.reduce((s, l) => s + (l.duration_minutes || 0), 0)
   return (
@@ -84,10 +110,10 @@ export function CourseCard({ course, students }) {
         <div className="mb-2 flex items-center gap-2">
           {course.category && <span className={cn('text-xs font-semibold', categoryColor(course.category.color).text)}>{course.category.name}</span>}
           <span className="text-slate-300">•</span>
-          <span className="text-xs text-slate-500">{LEVELS[course.level]}</span>
+          <span className="text-xs text-slate-500">{levelLabel(course.level)}</span>
         </div>
-        <h3 className="line-clamp-2 text-base font-semibold leading-snug text-slate-900 group-hover:text-brand-700">{course.title}</h3>
-        {course.subtitle && <p className="mt-1.5 line-clamp-2 text-sm text-slate-500">{course.subtitle}</p>}
+        <h3 dir="auto" className="line-clamp-2 text-base font-semibold leading-snug text-slate-900 group-hover:text-brand-700">{course.title}</h3>
+        {course.subtitle && <p dir="auto" className="mt-1.5 line-clamp-2 text-sm text-slate-500">{course.subtitle}</p>}
         <div className="mt-auto pt-4">
           <div className="flex items-center justify-between border-t border-slate-100 pt-4">
             <div className="flex min-w-0 items-center gap-2">
@@ -98,13 +124,13 @@ export function CourseCard({ course, students }) {
               {lessons.length > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {minutes ? formatMinutes(minutes) : `${lessons.length} lessons`}
+                  {minutes ? formatMinutes(minutes) : t('course.lessonCount', { count: lessons.length })}
                 </span>
               )}
               {students > 0 && (
                 <span className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" />
-                  {students}
+                  {t('common.number', { n: students })}
                 </span>
               )}
             </div>
@@ -112,8 +138,8 @@ export function CourseCard({ course, students }) {
         </div>
       </div>
       <div className="flex items-center justify-between bg-slate-50 px-5 py-2.5">
-        <Badge tone="green">Free</Badge>
-        <span className="text-xs font-semibold text-brand-600 group-hover:underline">View course →</span>
+        <Badge tone="green">{t('common.free')}</Badge>
+        <span className="text-xs font-semibold text-brand-600 group-hover:underline">{t('course.viewCourse')}</span>
       </div>
     </Link>
   )
@@ -123,37 +149,39 @@ export const COURSE_CARD_SELECT = 'id, title, slug, subtitle, level, thumbnail_u
 
 export function Markdown({ children, className }) {
   return (
-    <div className={cn('prose prose-slate max-w-none prose-headings:font-display prose-a:text-brand-600 prose-img:rounded-xl', className)}>
+    <div dir="auto" className={cn('prose prose-slate max-w-none prose-headings:font-display prose-a:text-brand-600 prose-img:rounded-xl', className)}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{children || ''}</ReactMarkdown>
     </div>
   )
 }
 
 export function VideoEmbed({ url, title }) {
+  const { t } = useI18n()
   const embed = toEmbedUrl(url)
   if (!embed) {
     return url ? (
       <div className="flex aspect-video items-center justify-center rounded-xl bg-slate-900 text-sm text-slate-300">
-        <a href={url} target="_blank" rel="noreferrer" className="underline">Open video in a new tab</a>
+        <a href={url} target="_blank" rel="noreferrer" className="underline">{t('course.openVideo')}</a>
       </div>
     ) : null
   }
   return (
     <div className="aspect-video overflow-hidden rounded-xl bg-black shadow-lg">
-      <iframe src={embed} title={title || 'Lesson video'} className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowFullScreen />
+      <iframe src={embed} title={title || t('course.lessonVideo')} className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowFullScreen />
     </div>
   )
 }
 
-export function ImageUpload({ value, onChange, folder = 'uploads', aspect = 'aspect-video', label = 'Upload image' }) {
+export function ImageUpload({ value, onChange, folder = 'uploads', aspect = 'aspect-video', label }) {
   const { user } = useAuth()
+  const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const inputRef = useRef(null)
 
   const handle = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) return toast.error('Image must be 5 MB or smaller')
+    if (file.size > 5 * 1024 * 1024) return toast.error(t('upload.tooLarge'))
     setBusy(true)
     try {
       onChange(await uploadMedia(file, user.id, folder))
@@ -177,15 +205,15 @@ export function ImageUpload({ value, onChange, folder = 'uploads', aspect = 'asp
         ) : (
           <span className="flex flex-col items-center gap-2 text-sm text-slate-500">
             <ImagePlus className="h-7 w-7 text-slate-400" />
-            {busy ? 'Uploading…' : label}
-            <span className="text-xs text-slate-400">PNG, JPG or WebP up to 5 MB</span>
+            {busy ? t('upload.uploading') : label ?? t('upload.uploadImage')}
+            <span className="text-xs text-slate-400">{t('upload.hint')}</span>
           </span>
         )}
-        {value && <span className="absolute inset-0 flex items-center justify-center bg-slate-900/50 text-sm font-medium text-white opacity-0 transition group-hover:opacity-100">{busy ? 'Uploading…' : 'Change image'}</span>}
+        {value && <span className="absolute inset-0 flex items-center justify-center bg-slate-900/50 text-sm font-medium text-white opacity-0 transition group-hover:opacity-100">{busy ? t('upload.uploading') : t('upload.change')}</span>}
       </button>
       {value && (
         <button type="button" onClick={() => onChange('')} className="text-xs font-medium text-red-600 hover:underline">
-          Remove image
+          {t('upload.remove')}
         </button>
       )}
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handle} />
@@ -195,6 +223,7 @@ export function ImageUpload({ value, onChange, folder = 'uploads', aspect = 'asp
 
 // Editable list of short strings (course outcomes, requirements, …).
 export function ListEditor({ label, items, onChange, placeholder }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-slate-700">{label}</p>
@@ -206,13 +235,13 @@ export function ListEditor({ label, items, onChange, placeholder }) {
             placeholder={placeholder}
             onChange={(e) => onChange(items.map((v, j) => (j === i ? e.target.value : v)))}
           />
-          <Button type="button" variant="ghost" size="icon" onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label="Remove">
+          <Button type="button" variant="ghost" size="icon" onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label={t('common.remove')}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       ))}
       <Button type="button" variant="soft" size="sm" onClick={() => onChange([...items, ''])}>
-        <Plus className="h-4 w-4" /> Add item
+        <Plus className="h-4 w-4" /> {t('common.addItem')}
       </Button>
     </div>
   )
@@ -220,6 +249,7 @@ export function ListEditor({ label, items, onChange, placeholder }) {
 
 export function RequireAuth({ roles, children }) {
   const { user, profile, loading } = useAuth()
+  const { t } = useI18n()
   const location = useLocation()
   if (loading || (user && profile === undefined)) return <PageLoader />
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
@@ -227,9 +257,9 @@ export function RequireAuth({ roles, children }) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6 text-center">
         <div className="max-w-md">
-          <h1 className="text-2xl font-bold">We couldn't load your profile</h1>
-          <p className="mt-2 text-slate-600">Please check your connection and try again. If this keeps happening, contact the SkillRise team.</p>
-          <Button className="mt-6" onClick={() => window.location.reload()}>Try again</Button>
+          <h1 className="text-2xl font-bold">{t('auth.profileError.title')}</h1>
+          <p className="mt-2 text-slate-600">{t('auth.profileError.body')}</p>
+          <Button className="mt-6" onClick={() => window.location.reload()}>{t('common.tryAgain')}</Button>
         </div>
       </div>
     )
@@ -238,9 +268,9 @@ export function RequireAuth({ roles, children }) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6 text-center">
         <div className="max-w-md">
-          <h1 className="text-2xl font-bold">Account suspended</h1>
-          <p className="mt-2 text-slate-600">Your account has been suspended. Please contact the SkillRise team if you believe this is a mistake.</p>
-          <Button to="/contact" className="mt-6">Contact us</Button>
+          <h1 className="text-2xl font-bold">{t('auth.suspended.title')}</h1>
+          <p className="mt-2 text-slate-600">{t('auth.suspended.body')}</p>
+          <Button to="/contact" className="mt-6">{t('common.contactUs')}</Button>
         </div>
       </div>
     )
@@ -253,6 +283,7 @@ const ConfirmContext = createContext(null)
 
 export function ConfirmProvider({ children }) {
   const [state, setState] = useState(null)
+  const { t } = useI18n()
   const confirm = useCallback(
     (opts) =>
       new Promise((resolve) => {
@@ -271,12 +302,12 @@ export function ConfirmProvider({ children }) {
         open={!!state}
         onClose={() => close(false)}
         size="sm"
-        title={state?.title || 'Are you sure?'}
+        title={state?.title || t('confirm.title')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => close(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => close(false)}>{t('common.cancel')}</Button>
             <Button variant={state?.danger ? 'danger' : 'primary'} onClick={() => close(true)}>
-              {state?.confirmLabel || 'Confirm'}
+              {state?.confirmLabel || t('confirm.confirm')}
             </Button>
           </>
         }

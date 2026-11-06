@@ -5,11 +5,13 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { errorMessage, formatDate } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { useConfirm } from '../../components/shared'
 import { Avatar, Button, Card, EmptyState, PageHeader, PageLoader, SearchInput, StatusBadge, Tabs } from '../../components/ui'
 
 export default function AdminUsers() {
   const { user: me } = useAuth()
+  const { t } = useI18n()
   const confirm = useConfirm()
   const [search, setSearch] = useState('')
   const [role, setRole] = useState('all')
@@ -28,17 +30,18 @@ export default function AdminUsers() {
   }
 
   const changeRole = async (u, newRole) => {
-    if (u.id === me.id) return toast.error("You can't change your own role")
-    if (await confirm({ title: `Change role to ${newRole}?`, message: `${u.full_name || u.email} will become a ${newRole}.`, confirmLabel: 'Change role' })) {
-      update(u, { role: newRole }, 'Role updated')
+    if (u.id === me.id) return toast.error(t('admin.users.ownRole'))
+    const roleName = t(`roles.${newRole}`)
+    if (await confirm({ title: t('admin.users.changeRoleTitle', { role: roleName }), message: t('admin.users.changeRoleMessage', { name: u.full_name || u.email, role: roleName }), confirmLabel: t('admin.users.changeRole') })) {
+      update(u, { role: newRole }, t('admin.users.roleUpdated'))
     }
   }
 
   const toggleStatus = async (u) => {
-    if (u.id === me.id) return toast.error("You can't suspend yourself")
+    if (u.id === me.id) return toast.error(t('admin.users.ownSuspend'))
     const suspend = u.status === 'active'
-    if (await confirm({ title: suspend ? 'Suspend user?' : 'Reactivate user?', message: suspend ? 'They will lose access to their dashboard until reactivated.' : 'They will regain full access.', danger: suspend, confirmLabel: suspend ? 'Suspend' : 'Reactivate' })) {
-      update(u, { status: suspend ? 'suspended' : 'active' }, suspend ? 'User suspended' : 'User reactivated')
+    if (await confirm({ title: suspend ? t('admin.users.suspendTitle') : t('admin.users.reactivateTitle'), message: suspend ? t('admin.users.suspendMessage') : t('admin.users.reactivateMessage'), danger: suspend, confirmLabel: suspend ? t('admin.users.suspend') : t('admin.users.reactivate') })) {
+      update(u, { status: suspend ? 'suspended' : 'active' }, suspend ? t('admin.users.suspended') : t('admin.users.reactivated'))
     }
   }
 
@@ -47,29 +50,29 @@ export default function AdminUsers() {
 
   return (
     <>
-      <PageHeader title="Users" description="Manage roles and access for everyone on the platform." />
+      <PageHeader title={t('portalNav.users')} description={t('admin.users.description')} />
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <Tabs
           value={role}
           onChange={setRole}
-          tabs={['all', 'student', 'teacher', 'admin'].map((r) => ({ value: r, label: r === 'all' ? 'All' : `${r[0].toUpperCase()}${r.slice(1)}s`, count: count(r) }))}
+          tabs={['all', 'student', 'teacher', 'admin'].map((r) => ({ value: r, label: t(`admin.users.tabs.${r}`), count: t('common.number', { n: count(r) }) }))}
         />
-        <SearchInput value={search} onChange={setSearch} placeholder="Search name or email…" className="sm:w-72" />
+        <SearchInput value={search} onChange={setSearch} placeholder={t('admin.users.search')} className="sm:w-72" />
       </div>
       {rows.length === 0 ? (
-        <EmptyState icon={Users} title="No users found" />
+        <EmptyState icon={Users} title={t('admin.users.empty')} />
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="table-base">
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Joined</th>
-                  <th>Last sign-in</th>
-                  <th className="text-right">Actions</th>
+                  <th>{t('admin.users.user')}</th>
+                  <th>{t('profile.role')}</th>
+                  <th>{t('studentsTab.status')}</th>
+                  <th>{t('admin.users.joined')}</th>
+                  <th>{t('admin.users.lastSignIn')}</th>
+                  <th className="text-end">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -80,24 +83,24 @@ export default function AdminUsers() {
                         <Avatar src={u.avatar_url} name={u.full_name} size="sm" />
                         <div className="min-w-0">
                           <p className="font-medium text-slate-900">{u.full_name || '—'}</p>
-                          <p className="text-xs text-slate-500">{u.email}</p>
+                          <p dir="ltr" className="text-start text-xs text-slate-500">{u.email}</p>
                         </div>
                       </div>
                     </td>
                     <td>
                       <select className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium capitalize" value={u.role} onChange={(e) => changeRole(u, e.target.value)} disabled={u.id === me.id}>
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
-                        <option value="admin">Admin</option>
+                        <option value="student">{t('roles.student')}</option>
+                        <option value="teacher">{t('roles.teacher')}</option>
+                        <option value="admin">{t('roles.admin')}</option>
                       </select>
                     </td>
                     <td><StatusBadge status={u.status} /></td>
                     <td className="whitespace-nowrap text-slate-500">{formatDate(u.created_at)}</td>
-                    <td className="whitespace-nowrap text-slate-500">{u.last_sign_in_at ? formatDate(u.last_sign_in_at) : 'Never'}</td>
-                    <td className="text-right">
+                    <td className="whitespace-nowrap text-slate-500">{u.last_sign_in_at ? formatDate(u.last_sign_in_at) : t('admin.users.never')}</td>
+                    <td className="text-end">
                       {u.id !== me.id && (
                         <Button size="sm" variant={u.status === 'active' ? 'ghost' : 'soft'} className={u.status === 'active' ? 'text-red-600 hover:bg-red-50' : ''} onClick={() => toggleStatus(u)}>
-                          {u.status === 'active' ? 'Suspend' : 'Reactivate'}
+                          {u.status === 'active' ? t('admin.users.suspend') : t('admin.users.reactivate')}
                         </Button>
                       )}
                     </td>

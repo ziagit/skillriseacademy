@@ -3,6 +3,7 @@ import { Award, BookOpen, CircleCheck, FileText, GraduationCap, Inbox, UserCheck
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { formatNumber, timeAgo } from '../../lib/utils'
+import { getLocale, useI18n } from '../../lib/i18n'
 import { Avatar, Card, CardHeader, ErrorState, PageHeader, PageLoader, StatCard } from '../../components/ui'
 
 // Single-series column chart: one hue, hover tooltip per bar, 4px rounded tops.
@@ -31,12 +32,13 @@ function ColumnChart({ data, label }) {
 
 // Horizontal bars for ranked categories; values are direct-labelled in text ink.
 function BarList({ data }) {
+  const { t } = useI18n()
   const max = Math.max(1, ...data.map((d) => d.value))
-  if (!data.length) return <p className="py-10 text-center text-sm text-slate-500">No enrollments yet</p>
+  if (!data.length) return <p className="py-10 text-center text-sm text-slate-500">{t('admin.dash.noEnrollments')}</p>
   return (
     <ul className="space-y-3">
       {data.map((d) => (
-        <li key={d.label} className="group" title={`${d.label}: ${d.value}`}>
+        <li key={d.label} className="group" title={`${d.label}: ${formatNumber(d.value)}`}>
           <div className="mb-1 flex justify-between text-sm">
             <span className="truncate text-slate-700">{d.label}</span>
             <span className="font-semibold text-slate-900">{formatNumber(d.value)}</span>
@@ -54,15 +56,18 @@ function lastSixMonths(rows) {
   const counts = Object.fromEntries((rows || []).map((r) => [r.month, r.count]))
   const out = []
   const now = new Date()
+  // Buckets are Gregorian months, so label them in the Gregorian calendar even for fa-IR.
+  const monthName = new Intl.DateTimeFormat(getLocale(), { month: 'short', calendar: 'gregory' })
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    out.push({ label: d.toLocaleDateString('en-US', { month: 'short' }), value: counts[key] || 0 })
+    out.push({ label: monthName.format(d), value: counts[key] || 0 })
   }
   return out
 }
 
 export default function AdminDashboard() {
+  const { t } = useI18n()
   const { data, loading, error, reload } = useQuery(async () => {
     const [stats, pendingCourses, applications, messages] = await Promise.all([
       supabase.rpc('admin_stats'),
@@ -79,31 +84,31 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Admin overview" description="A snapshot of SkillRise Academy's learners, teachers and content." />
+      <PageHeader title={t('admin.dash.title')} description={t('admin.dash.description')} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Students" value={formatNumber(s.students)} icon={Users} to="/admin/users" />
-        <StatCard label="Teachers" value={formatNumber(s.teachers)} icon={GraduationCap} tone="violet" to="/admin/users" />
-        <StatCard label="Published courses" value={formatNumber(s.courses_published)} icon={BookOpen} tone="green" to="/admin/courses" />
-        <StatCard label="Certificates issued" value={formatNumber(s.certificates)} icon={Award} tone="amber" to="/admin/certificates" />
+        <StatCard label={t('admin.dash.students')} value={formatNumber(s.students)} icon={Users} to="/admin/users" />
+        <StatCard label={t('admin.dash.teachers')} value={formatNumber(s.teachers)} icon={GraduationCap} tone="violet" to="/admin/users" />
+        <StatCard label={t('admin.dash.published')} value={formatNumber(s.courses_published)} icon={BookOpen} tone="green" to="/admin/courses" />
+        <StatCard label={t('home.stats.certificates')} value={formatNumber(s.certificates)} icon={Award} tone="amber" to="/admin/certificates" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Enrollments" value={formatNumber(s.enrollments)} hint={`${s.completions} completed`} icon={CircleCheck} tone="green" />
-        <StatCard label="Courses to review" value={s.courses_pending} icon={BookOpen} tone="amber" to="/admin/courses?status=pending" />
-        <StatCard label="Teacher applications" value={s.applications_pending} icon={UserCheck} tone="violet" to="/admin/applications" />
-        <StatCard label="Unread messages" value={s.messages_unread} hint={`${s.posts_pending} blog posts to review`} icon={Inbox} tone="red" to="/admin/messages" />
+        <StatCard label={t('admin.dash.enrollments')} value={formatNumber(s.enrollments)} hint={t('admin.dash.completed', { count: s.completions })} icon={CircleCheck} tone="green" />
+        <StatCard label={t('admin.dash.toReview')} value={formatNumber(s.courses_pending)} icon={BookOpen} tone="amber" to="/admin/courses?status=pending" />
+        <StatCard label={t('portalNav.applications')} value={formatNumber(s.applications_pending)} icon={UserCheck} tone="violet" to="/admin/applications" />
+        <StatCard label={t('admin.dash.unread')} value={formatNumber(s.messages_unread)} hint={t('admin.dash.postsToReview', { count: s.posts_pending })} icon={Inbox} tone="red" to="/admin/messages" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="New sign-ups" description="All accounts, last 6 months" />
+          <CardHeader title={t('admin.dash.signups')} description={t('admin.dash.signupsHint')} />
           <div className="p-5 pt-8">
-            <ColumnChart data={lastSixMonths(s.signups_by_month)} label="New sign-ups per month" />
+            <ColumnChart data={lastSixMonths(s.signups_by_month)} label={t('admin.dash.signupsLabel')} />
           </div>
         </Card>
         <Card>
-          <CardHeader title="Enrollments by category" description="All time" />
+          <CardHeader title={t('admin.dash.byCategory')} description={t('admin.dash.allTime')} />
           <div className="p-5">
             <BarList data={(s.enrollments_by_category || []).slice(0, 8).map((c) => ({ label: c.name, value: c.count }))} />
           </div>
@@ -111,18 +116,19 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <QueueCard title="Courses awaiting review" to="/admin/courses?status=pending" empty="No courses to review" items={data.pendingCourses.map((c) => ({ id: c.id, title: c.title, sub: `${c.teacher?.full_name} · ${timeAgo(c.updated_at)}`, avatar: c.teacher, href: `/teacher/courses/${c.id}` }))} />
-        <QueueCard title="Teacher applications" to="/admin/applications" empty="No pending applications" items={data.applications.map((a) => ({ id: a.id, title: a.user?.full_name, sub: `${a.expertise} · ${timeAgo(a.created_at)}`, avatar: a.user, href: '/admin/applications' }))} />
-        <QueueCard title="Unread messages" to="/admin/messages" empty="Inbox zero" icon={FileText} items={data.messages.map((m) => ({ id: m.id, title: m.name, sub: `${m.subject || 'No subject'} · ${timeAgo(m.created_at)}`, avatar: { full_name: m.name }, href: '/admin/messages' }))} />
+        <QueueCard title={t('admin.dash.awaitingReview')} to="/admin/courses?status=pending" empty={t('admin.dash.noReview')} items={data.pendingCourses.map((c) => ({ id: c.id, title: c.title, sub: `${c.teacher?.full_name} · ${timeAgo(c.updated_at)}`, avatar: c.teacher, href: `/teacher/courses/${c.id}` }))} />
+        <QueueCard title={t('portalNav.applications')} to="/admin/applications" empty={t('admin.dash.noApplications')} items={data.applications.map((a) => ({ id: a.id, title: a.user?.full_name, sub: `${a.expertise} · ${timeAgo(a.created_at)}`, avatar: a.user, href: '/admin/applications' }))} />
+        <QueueCard title={t('admin.dash.unread')} to="/admin/messages" empty={t('admin.dash.inboxZero')} icon={FileText} items={data.messages.map((m) => ({ id: m.id, title: m.name, sub: `${m.subject || t('admin.noSubject')} · ${timeAgo(m.created_at)}`, avatar: { full_name: m.name }, href: '/admin/messages' }))} />
       </div>
     </div>
   )
 }
 
 function QueueCard({ title, to, items, empty }) {
+  const { t } = useI18n()
   return (
     <Card>
-      <CardHeader title={title} action={<Link to={to} className="text-sm font-semibold text-brand-600 hover:underline">View all</Link>} />
+      <CardHeader title={title} action={<Link to={to} className="text-sm font-semibold text-brand-600 hover:underline">{t('student.viewAll')}</Link>} />
       <ul className="divide-y divide-slate-100">
         {items.map((i) => (
           <li key={i.id}>

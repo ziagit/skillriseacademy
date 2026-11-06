@@ -4,10 +4,12 @@ import { Award, ExternalLink, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { errorMessage, formatDate } from '../../lib/utils'
+import { useI18n } from '../../lib/i18n'
 import { useConfirm } from '../../components/shared'
 import { Avatar, Button, Card, EmptyState, PageHeader, PageLoader, SearchInput } from '../../components/ui'
 
 export default function AdminCertificates() {
+  const { t } = useI18n()
   const confirm = useConfirm()
   const [search, setSearch] = useState('')
   const { data, loading, reload } = useQuery(
@@ -20,29 +22,29 @@ export default function AdminCertificates() {
   }, [data, search])
 
   const revoke = async (c) => {
-    if (!(await confirm({ title: 'Revoke certificate?', message: `${c.code} will no longer verify. The learner can claim a new certificate if they still meet the requirements.`, danger: true, confirmLabel: 'Revoke' }))) return
+    if (!(await confirm({ title: t('admin.certs.revokeTitle'), message: t('admin.certs.revokeMessage', { code: c.code }), danger: true, confirmLabel: t('admin.certs.revoke') }))) return
     const { error } = await supabase.from('certificates').delete().eq('id', c.id)
     if (error) return toast.error(errorMessage(error))
-    toast.success('Certificate revoked')
+    toast.success(t('admin.certs.revoked'))
     reload()
   }
 
   if (loading) return <PageLoader />
   return (
     <>
-      <PageHeader title="Certificates" description={`${data.length} certificates issued.`} actions={<SearchInput value={search} onChange={setSearch} placeholder="Search code, learner or course…" className="sm:w-80" />} />
+      <PageHeader title={t('portalNav.certificates')} description={t('admin.certs.issuedCount', { count: data.length })} actions={<SearchInput value={search} onChange={setSearch} placeholder={t('admin.certs.search')} className="sm:w-80" />} />
       {rows.length === 0 ? (
-        <EmptyState icon={Award} title="No certificates found" />
+        <EmptyState icon={Award} title={t('admin.certs.empty')} />
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="table-base">
               <thead>
                 <tr>
-                  <th>Learner</th>
-                  <th>Course</th>
-                  <th>Certificate ID</th>
-                  <th>Issued</th>
+                  <th>{t('studentsTab.learner')}</th>
+                  <th>{t('admin.courses.course')}</th>
+                  <th>{t('admin.certs.id')}</th>
+                  <th>{t('admin.certs.issued')}</th>
                   <th />
                 </tr>
               </thead>
@@ -56,12 +58,12 @@ export default function AdminCertificates() {
                       </div>
                     </td>
                     <td>{c.course?.title}</td>
-                    <td className="font-mono text-xs">{c.code}</td>
+                    <td dir="ltr" className="text-start font-mono text-xs">{c.code}</td>
                     <td className="whitespace-nowrap text-slate-500">{formatDate(c.issued_at)}</td>
                     <td>
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" to={`/certificate/${c.code}`} title="View"><ExternalLink className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="hover:text-red-600" onClick={() => revoke(c)} title="Revoke"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" to={`/certificate/${c.code}`} title={t('common.view')}><ExternalLink className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:text-red-600" onClick={() => revoke(c)} title={t('admin.certs.revoke')}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </td>
                   </tr>

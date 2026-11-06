@@ -10,7 +10,23 @@
     <meta name="theme-color" content="#1d4ed8" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Mirrors detectLang() in src/lib/i18n.jsx so RTL visitors don't see an LTR flash before React loads. -->
+    <script>
+      (function () {
+        var l = null
+        try { l = localStorage.getItem('skillrise.lang') } catch (e) {}
+        if (l !== 'en' && l !== 'fa') {
+          l = null
+          var langs = navigator.languages || [navigator.language]
+          for (var i = 0; i < langs.length && !l; i++) {
+            var c = (langs[i] || '').slice(0, 2)
+            if (c === 'en' || c === 'fa') l = c
+          }
+        }
+        if (l === 'fa') { document.documentElement.lang = 'fa'; document.documentElement.dir = 'rtl' }
+      })()
+    </script>
     <title>SkillRise Academy — Free Online Skills Training</title>
   </head>
   <body>
