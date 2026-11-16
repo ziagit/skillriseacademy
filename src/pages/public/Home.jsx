@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowRight, Award, BadgeCheck, BookOpen, CirclePlay, Clock, GraduationCap, Heart, Sparkles, Target, Users,
+  ArrowRight, Award, BadgeCheck, BookOpen, ChevronLeft, ChevronRight, CirclePlay, Clock, GraduationCap, Heart, Sparkles, Target,
+  Users,
 } from 'lucide-react'
 import { homePathFor, useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -31,61 +32,162 @@ function ViewAll({ to, children }) {
   )
 }
 
-// Two promo banners side by side, like Coursera's home carousel.
-function HeroBanners() {
-  const { t } = useI18n()
-  const { user, profile } = useAuth()
-  const firstName = profile?.full_name?.split(' ')[0]
-  return (
-    <section className="container-page pt-6">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="relative flex min-h-[280px] overflow-hidden rounded-2xl bg-brand-600 text-white">
-          <div className="absolute -bottom-20 -end-16 h-72 w-72 rounded-full bg-brand-500/60" />
-          <div className="absolute -top-24 end-28 h-48 w-48 rounded-full bg-brand-800/60" />
-          <div className="relative z-10 flex flex-col sm:max-w-[62%] justify-center p-7 sm:p-9">
-            {user ? (
-              <>
-                <h1 className="text-[28px] font-semibold leading-tight text-white sm:text-[32px]">{t('home.banner.welcome', { name: firstName || t('portalNav.there') })}</h1>
-                <p className="mt-3 text-sm leading-relaxed text-brand-100 sm:text-base">{t('home.banner.welcomeText')}</p>
-                <div className="mt-6">
-                  <Button to={homePathFor(profile?.role)} variant="white">
-                    {t('home.banner.continue')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-semibold text-amber-300">{t('home.hero.badge')}</p>
-                <h1 className="mt-2 text-[28px] font-semibold leading-tight text-white sm:text-[34px]">{t('home.banner.title')}</h1>
-                <p className="mt-3 text-sm leading-relaxed text-brand-100 sm:text-base">{t('home.banner.text')}</p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Button to="/signup" variant="white">{t('home.banner.cta')}</Button>
-                  <Button to="/courses" className="bg-transparent text-white ring-1 ring-inset ring-white/70 hover:bg-white/10">
-                    {t('home.hero.explore')}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-          <CertificateArt />
-        </div>
+const OUTLINE_WHITE = 'bg-transparent text-white ring-1 ring-inset ring-white/70 hover:bg-white/10'
 
-        <div className="relative flex min-h-[280px] overflow-hidden rounded-2xl bg-slate-950 text-white">
-          <div className="absolute -end-10 -top-10 h-64 w-64 rounded-full bg-amber-400/15" />
-          <div className="relative z-10 flex flex-col sm:max-w-[62%] justify-center p-7 sm:p-9">
-            <p className="text-sm font-semibold text-amber-300">{t('nav.forTeachers')}</p>
-            <h2 className="mt-2 text-[26px] font-semibold leading-tight text-white sm:text-[30px]">{t('home.banner.teachTitle')}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{t('home.banner.teachText')}</p>
-            <div className="mt-6">
-              <Button to="/teach" className="bg-transparent text-white ring-1 ring-inset ring-white/70 hover:bg-white/10">
-                {t('home.banner.teachCta')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-              </Button>
-            </div>
-          </div>
-          <TeacherArt />
+function Slide({ className, eyebrow, title, text, actions, art, heading: Heading = 'h2', label }) {
+  return (
+    <div role="group" aria-roledescription="slide" aria-label={label} className={cn('relative flex min-h-[300px] shrink-0 basis-[88%] snap-start overflow-hidden rounded-2xl text-white sm:basis-[80%] lg:basis-[calc(50%-8px)] xl:basis-[47%]', className)}>
+      <div className="relative z-10 flex flex-col justify-center p-7 sm:max-w-[62%] sm:p-9">
+        {eyebrow && <p className="text-sm font-semibold text-amber-300">{eyebrow}</p>}
+        <Heading className="mt-2 text-[26px] font-semibold leading-tight text-white sm:text-[32px]">{title}</Heading>
+        <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">{text}</p>
+        <div className="mt-6 flex flex-wrap gap-3">{actions}</div>
+      </div>
+      {art}
+    </div>
+  )
+}
+
+// Coursera-style hero carousel: swipe or scroll-snap on touch, arrows and dots on desktop,
+// and a slow auto-advance that stops once the visitor interacts.
+function HeroCarousel() {
+  const { t, dir } = useI18n()
+  const { user, profile } = useAuth()
+  const trackRef = useRef(null)
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const firstName = profile?.full_name?.split(' ')[0]
+
+  const slides = [
+    user ? (
+      <Slide
+        key="learn" heading="h1" className="bg-brand-600"
+        title={t('home.banner.welcome', { name: firstName || t('portalNav.there') })}
+        text={t('home.banner.welcomeText')}
+        actions={<Button to={homePathFor(profile?.role)} variant="white">{t('home.banner.continue')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" /></Button>}
+        art={<><Circles a="bg-brand-500/60" b="bg-brand-800/60" /><CertificateArt /></>}
+      />
+    ) : (
+      <Slide
+        key="learn" heading="h1" className="bg-brand-600"
+        eyebrow={t('home.hero.badge')} title={t('home.banner.title')} text={t('home.banner.text')}
+        actions={<><Button to="/signup" variant="white">{t('home.banner.cta')}</Button><Button to="/courses" className={OUTLINE_WHITE}>{t('home.hero.explore')}</Button></>}
+        art={<><Circles a="bg-brand-500/60" b="bg-brand-800/60" /><CertificateArt /></>}
+      />
+    ),
+    <Slide
+      key="teach" className="bg-slate-950"
+      eyebrow={t('nav.forTeachers')} title={t('home.banner.teachTitle')} text={t('home.banner.teachText')}
+      actions={<Button to="/teach" className={OUTLINE_WHITE}>{t('home.banner.teachCta')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" /></Button>}
+      art={<><Circles a="bg-amber-400/15" b="bg-white/5" /><TeacherArt /></>}
+    />,
+    <Slide
+      key="cert" className="bg-emerald-700"
+      eyebrow={t('home.banner.certEyebrow')} title={t('home.banner.certTitle')} text={t('home.banner.certText')}
+      actions={<><Button to="/courses" variant="white">{t('home.hero.explore')}</Button><Button to="/verify" className={OUTLINE_WHITE}>{t('nav.verify')}</Button></>}
+      art={<><Circles a="bg-emerald-500/50" b="bg-emerald-900/40" /><IconArt icon={BadgeCheck} tone="text-emerald-600" /></>}
+    />,
+    <Slide
+      key="donate" className="bg-violet-700"
+      eyebrow={t('home.banner.donateEyebrow')} title={t('home.banner.donateTitle')} text={t('home.banner.donateText')}
+      actions={<Button to="/donate" variant="white"><Heart className="h-4 w-4" /> {t('home.mission.donate')}</Button>}
+      art={<><Circles a="bg-violet-500/50" b="bg-violet-900/40" /><IconArt icon={Heart} tone="text-rose-500" /></>}
+    />,
+  ]
+  const [stops, setStops] = useState(() => slides.map((_, i) => i))
+  const sign = dir === 'rtl' ? -1 : 1
+
+  // Scroll positions the track can rest at: each slide's start, clamped to the end. On wide
+  // screens the last slides share the final position, so there are fewer dots than slides.
+  const measure = useCallback(() => {
+    const track = trackRef.current
+    if (!track) return
+    const box = track.getBoundingClientRect()
+    const max = track.scrollWidth - track.clientWidth
+    const scrolled = Math.abs(track.scrollLeft)
+    const positions = [...track.children].map((el) => {
+      const r = el.getBoundingClientRect()
+      return Math.min(max, Math.round((dir === 'rtl' ? box.right - r.right : r.left - box.left) + scrolled))
+    })
+    setStops(positions.filter((x, i) => i === 0 || x > positions[i - 1] + 4))
+  }, [dir])
+
+  useEffect(() => {
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [measure])
+
+  const goTo = useCallback((i) => {
+    const n = stops.length
+    trackRef.current?.scrollTo({ left: sign * stops[((i % n) + n) % n], behavior: 'smooth' })
+  }, [stops, sign])
+
+  const onScroll = () => {
+    const x = Math.abs(trackRef.current.scrollLeft)
+    setActive(stops.reduce((best, s, i) => (Math.abs(s - x) < Math.abs(stops[best] - x) ? i : best), 0))
+  }
+
+  useEffect(() => {
+    if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => !document.hidden && goTo(active + 1), 6000)
+    return () => clearInterval(id)
+  }, [active, paused, goTo])
+
+  const arrow = 'absolute top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-900 shadow-lg ring-1 ring-slate-200 transition hover:bg-slate-50 md:flex'
+  return (
+    <section
+      className="container-page pt-6"
+      aria-roledescription="carousel"
+      aria-label={t('home.banner.carousel')}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onTouchStart={() => setPaused(true)}
+    >
+      <div className="relative">
+        <div ref={trackRef} onScroll={onScroll} className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain">
+          {slides}
         </div>
+        <button type="button" onClick={() => goTo(active - 1)} aria-label={t('home.banner.prev')} className={cn(arrow, '-start-5')}>
+          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" />
+        </button>
+        <button type="button" onClick={() => goTo(active + 1)} aria-label={t('home.banner.next')} className={cn(arrow, '-end-5')}>
+          <ChevronRight className="h-5 w-5 rtl:-scale-x-100" />
+        </button>
+      </div>
+      <div className="mt-4 flex items-center gap-2">
+        {stops.map((stop, i) => (
+          <button
+            key={stop}
+            type="button"
+            onClick={() => goTo(i)}
+            aria-label={t('home.banner.goTo', { n: i + 1 })}
+            aria-current={active === i}
+            className={cn('h-2 rounded-full transition-all', active === i ? 'w-7 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400')}
+          />
+        ))}
       </div>
     </section>
+  )
+}
+
+function Circles({ a, b }) {
+  return (
+    <>
+      <div aria-hidden className={cn('absolute -bottom-20 -end-16 h-72 w-72 rounded-full', a)} />
+      <div aria-hidden className={cn('absolute -top-24 end-28 h-48 w-48 rounded-full', b)} />
+    </>
+  )
+}
+
+function IconArt({ icon: Icon, tone }) {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 hidden w-[40%] items-center justify-center sm:flex">
+      <div className="flex h-32 w-32 rotate-6 items-center justify-center rounded-3xl bg-white shadow-2xl">
+        <Icon className={cn('h-16 w-16', tone)} strokeWidth={1.75} />
+      </div>
+    </div>
   )
 }
 
@@ -409,7 +511,7 @@ export default function Home() {
   const counts = data?.counts || {}
   return (
     <>
-      <HeroBanners />
+      <HeroCarousel />
       <NewAndPopular courses={courses} counts={counts} />
       <ImpactStats />
       <ExploreCategories courses={courses} />
