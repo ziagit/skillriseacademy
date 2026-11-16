@@ -15,18 +15,8 @@ import { Avatar, Badge, Button, Modal, PageLoader } from './ui'
 
 export function Logo({ className, light = false }) {
   return (
-    <Link to="/" className={cn('flex items-center gap-2.5', className)}>
-      <svg viewBox="0 0 40 40" className="h-9 w-9 shrink-0" aria-hidden>
-        <rect width="40" height="40" rx="10" fill={light ? '#ffffff' : '#1d40d8'} />
-        <path d="M11 27h6v-6h6v-6h6" fill="none" stroke={light ? '#1d40d8' : '#fff'} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M24.5 11h5v5" fill="none" stroke="#fbbf24" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <span className="leading-none">
-        <span className={cn('block font-display text-lg font-extrabold tracking-tight', light ? 'text-white' : 'text-slate-900')}>
-          SkillRise
-        </span>
-        <span className={cn('block text-[10px] font-semibold uppercase tracking-[0.22em]', light ? 'text-brand-200' : 'text-brand-600')}>Academy</span>
-      </span>
+    <Link to="/" className={cn('flex shrink-0 items-center', className)}>
+      <img src={light ? '/logo-light.png' : '/logo.png'} alt="SkillRise Academy" className="h-10 w-auto" width="610" height="145" />
     </Link>
   )
 }
