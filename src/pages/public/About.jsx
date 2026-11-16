@@ -4,11 +4,12 @@ import { useI18n } from '../../lib/i18n'
 
 export function PageHero({ eyebrow, title, description, children }) {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-brand-50/70 to-white">
-      <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />
-      <div className="container-page relative py-16 text-center sm:py-20">
+    <section className="relative overflow-hidden border-b border-slate-200 bg-brand-50/70">
+      <div className="absolute -end-24 -top-24 hidden h-80 w-80 rounded-full bg-brand-100 md:block" />
+      <div className="absolute -bottom-28 -start-20 hidden h-64 w-64 rounded-full bg-brand-100/70 md:block" />
+      <div className="container-page relative py-14 text-center sm:py-16">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mx-auto mt-3 max-w-3xl text-4xl font-bold sm:text-5xl">{title}</h1>
+        <h1 className="mx-auto mt-2 max-w-3xl text-4xl font-semibold sm:text-[44px] sm:leading-tight">{title}</h1>
         {description && <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">{description}</p>}
         {children}
       </div>
@@ -34,22 +35,22 @@ export default function About() {
 
       <section className="container-page grid gap-12 py-20 lg:grid-cols-2">
         <div className="space-y-5 text-lg leading-relaxed text-slate-600">
-          <h2 className="text-3xl font-bold text-slate-900">{t('about.story')}</h2>
+          <h2 className="text-3xl font-semibold text-slate-900">{t('about.story')}</h2>
           <p>{t('about.story1')}</p>
           <p>{t('about.story2')}</p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <div className="rounded-2xl bg-brand-600 p-7 text-white">
+          <div className="rounded-xl bg-brand-600 p-7 text-white">
             <Target className="h-7 w-7 text-amber-300" />
             <h3 className="mt-4 text-xl font-bold text-white">{t('about.mission')}</h3>
             <p className="mt-2 text-brand-100">{t('about.missionText')}</p>
           </div>
-          <div className="rounded-2xl bg-slate-900 p-7 text-white">
+          <div className="rounded-xl bg-slate-900 p-7 text-white">
             <Eye className="h-7 w-7 text-amber-300" />
             <h3 className="mt-4 text-xl font-bold text-white">{t('about.vision')}</h3>
             <p className="mt-2 text-slate-300">{t('about.visionText')}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 p-7 sm:col-span-2">
+          <div className="rounded-xl border border-slate-200 p-7 sm:col-span-2">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                 <Globe2 className="h-6 w-6" />
@@ -67,11 +68,11 @@ export default function About() {
         <div className="container-page">
           <div className="mx-auto max-w-2xl text-center">
             <p className="eyebrow">{t('about.valuesEyebrow')}</p>
-            <h2 className="mt-2 text-3xl font-bold">{t('about.valuesTitle')}</h2>
+            <h2 className="mt-2 text-3xl font-semibold">{t('about.valuesTitle')}</h2>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {values.map((v) => (
-              <div key={v.title} className="rounded-2xl border border-slate-200 bg-white p-6">
+              <div key={v.title} className="rounded-xl border border-slate-200 bg-white p-6">
                 <v.icon className="h-7 w-7 text-brand-600" />
                 <h3 className="mt-4 font-semibold">{v.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{v.text}</p>
@@ -83,15 +84,15 @@ export default function About() {
 
       <section className="container-page py-20">
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 p-8">
+          <div className="rounded-xl border border-slate-200 p-8">
             <Users className="h-8 w-8 text-brand-600" />
-            <h3 className="mt-4 text-2xl font-bold">{t('about.teach')}</h3>
+            <h3 className="mt-4 text-2xl font-semibold">{t('about.teach')}</h3>
             <p className="mt-2 text-slate-600">{t('about.teachText')}</p>
             <Button to="/teach" className="mt-6">{t('home.teach.cta')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" /></Button>
           </div>
-          <div className="rounded-2xl bg-amber-50 p-8 ring-1 ring-amber-200">
+          <div className="rounded-xl bg-amber-50 p-8 ring-1 ring-amber-200">
             <HandHeart className="h-8 w-8 text-amber-600" />
-            <h3 className="mt-4 text-2xl font-bold">{t('about.fund')}</h3>
+            <h3 className="mt-4 text-2xl font-semibold">{t('about.fund')}</h3>
             <p className="mt-2 text-slate-700">{t('about.fundText')}</p>
             <Button to="/donate" variant="accent" className="mt-6">{t('about.donateNow')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" /></Button>
           </div>

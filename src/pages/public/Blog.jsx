@@ -61,7 +61,7 @@ export function BlogPost() {
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t('blog.all')}
           </Link>
           {data.status !== 'published' && <Badge tone="amber" className="ms-3 capitalize">{t(`status.${data.status}`)}</Badge>}
-          <h1 dir="auto" className="mt-5 text-3xl font-bold leading-tight sm:text-4xl">{data.title}</h1>
+          <h1 dir="auto" className="mt-5 text-3xl font-semibold leading-tight sm:text-4xl">{data.title}</h1>
           {data.excerpt && <p dir="auto" className="mt-4 text-lg text-slate-600">{data.excerpt}</p>}
           <div className="mt-6 flex items-center gap-3">
             <Avatar src={data.author?.avatar_url} name={data.author?.full_name} />
@@ -73,7 +73,7 @@ export function BlogPost() {
         </div>
       </header>
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        {data.cover_url && <img src={data.cover_url} alt="" className="mt-10 aspect-[16/9] w-full rounded-2xl object-cover" />}
+        {data.cover_url && <img src={data.cover_url} alt="" className="mt-10 aspect-[16/9] w-full rounded-xl object-cover" />}
         <Markdown className="prose-lg mt-10">{data.content}</Markdown>
         {data.tags?.length > 0 && (
           <div className="mt-10 flex flex-wrap gap-2">
@@ -83,7 +83,7 @@ export function BlogPost() {
           </div>
         )}
         {data.author?.bio && (
-          <div className="mt-12 flex gap-4 rounded-2xl border border-slate-200 p-6">
+          <div className="mt-12 flex gap-4 rounded-xl border border-slate-200 p-6">
             <Avatar src={data.author.avatar_url} name={data.author.full_name} size="lg" />
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('blog.writtenBy')}</p>

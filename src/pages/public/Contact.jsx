@@ -37,7 +37,7 @@ export default function Contact() {
           ]
             .filter(Boolean)
             .map((c) => (
-              <div key={c.label} className="flex items-start gap-4 rounded-2xl border border-slate-200 p-5">
+              <div key={c.label} className="flex items-start gap-4 rounded-xl border border-slate-200 p-5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                   <c.icon className="h-5 w-5" />
                 </div>
@@ -48,11 +48,11 @@ export default function Contact() {
               </div>
             ))}
         </div>
-        <div className="rounded-2xl border border-slate-200 p-6 shadow-card sm:p-8 lg:col-span-2">
+        <div className="rounded-xl border border-slate-200 p-6 shadow-card sm:p-8 lg:col-span-2">
           {sent ? (
             <div className="py-12 text-center">
               <CircleCheck className="mx-auto h-12 w-12 text-emerald-500" />
-              <h2 className="mt-4 text-2xl font-bold">{t('contact.sent')}</h2>
+              <h2 className="mt-4 text-2xl font-semibold">{t('contact.sent')}</h2>
               <p className="mt-2 text-slate-600">{t('contact.sentText')}</p>
             </div>
           ) : (

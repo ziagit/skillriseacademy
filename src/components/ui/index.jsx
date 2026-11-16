@@ -5,7 +5,8 @@ import { cn, initials } from '../../lib/utils'
 import { useI18n } from '../../lib/i18n'
 
 const buttonVariants = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-600/20',
+  primary: 'bg-brand-600 text-white hover:bg-brand-800',
+  outline: 'bg-white text-brand-600 ring-1 ring-inset ring-brand-600 hover:bg-brand-50',
   secondary: 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 shadow-sm',
   ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
   danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
@@ -17,12 +18,13 @@ const buttonSizes = {
   sm: 'h-8 px-3 text-xs gap-1.5',
   md: 'h-10 px-4 text-sm gap-2',
   lg: 'h-12 px-6 text-base gap-2',
+  xl: 'h-14 px-8 text-lg gap-2',
   icon: 'h-9 w-9 justify-center',
 }
 
 export function Button({ as, to, href, variant = 'primary', size = 'md', loading, className, children, disabled, ...props }) {
   const classes = cn(
-    'inline-flex items-center justify-center rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/25 disabled:pointer-events-none disabled:opacity-60 whitespace-nowrap',
+    'inline-flex items-center justify-center rounded-md font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/25 disabled:pointer-events-none disabled:opacity-60 whitespace-nowrap',
     buttonVariants[variant],
     buttonSizes[size],
     className,
@@ -320,7 +322,7 @@ export function PageHeader({ title, description, actions, back }) {
 export function ProgressBar({ value = 0, className }) {
   return (
     <div className={cn('h-2 w-full overflow-hidden rounded-full bg-slate-100', className)}>
-      <div className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-all" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+      <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
     </div>
   )
 }

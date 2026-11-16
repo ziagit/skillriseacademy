@@ -2,28 +2,29 @@
 @plugin '@tailwindcss/typography';
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #eff5ff;
-  --color-brand-100: #dbe8fe;
-  --color-brand-200: #bfd6fe;
-  --color-brand-300: #93bbfd;
-  --color-brand-400: #6096fa;
-  --color-brand-500: #3b72f6;
-  --color-brand-600: #2554eb;
-  --color-brand-700: #1d40d8;
-  --color-brand-800: #1e36af;
-  --color-brand-900: #1e338a;
-  --color-brand-950: #172154;
+  /* Coursera-style blue: 600 is the primary action colour. */
+  --color-brand-50: #f0f6ff;
+  --color-brand-100: #e3eeff;
+  --color-brand-200: #c3dbff;
+  --color-brand-300: #92bcff;
+  --color-brand-400: #5594f7;
+  --color-brand-500: #2b74ea;
+  --color-brand-600: #0056d2;
+  --color-brand-700: #0048b0;
+  --color-brand-800: #00419e;
+  --color-brand-900: #002761;
+  --color-brand-950: #001a43;
 
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-lift: 0 10px 30px -10px rgb(15 23 42 / 0.18);
+  --shadow-lift: 0 4px 16px rgb(15 23 42 / 0.12);
 }
 
 /* Persian: Vazirmatn for both text and headings. */
 html:lang(fa) {
-  --font-sans: 'Vazirmatn', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Vazirmatn', 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Vazirmatn', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -38,7 +39,7 @@ html:lang(fa) * {
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-white text-slate-700 font-sans;
+    @apply bg-white text-slate-800 font-sans;
   }
   h1, h2, h3, h4 {
     @apply font-display text-slate-900 tracking-tight;
@@ -53,10 +54,19 @@ html:lang(fa) * {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.14em] text-brand-600;
+    @apply text-sm font-semibold text-brand-600;
+  }
+  .link {
+    @apply font-semibold text-brand-600 hover:text-brand-800 hover:underline;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
   .input {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15 disabled:bg-slate-50 disabled:text-slate-500;
+    @apply block w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-50 disabled:text-slate-500;
   }
   .table-base {
     @apply min-w-full divide-y divide-slate-200 text-sm;

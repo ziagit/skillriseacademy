@@ -30,26 +30,25 @@ function AuthShell({ title, subtitle, children, footer }) {
             {footer && <div className="mt-8 text-center text-sm text-slate-600">{footer}</div>}
           </div>
         </div>
-        <div className="relative hidden overflow-hidden bg-brand-950 lg:block">
-          <div className="absolute inset-0 bg-grid opacity-[0.08] invert" />
-          <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-600/50 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-amber-400/20 blur-3xl" />
+        <div className="relative hidden overflow-hidden bg-brand-600 lg:block">
+          <div className="absolute -end-24 -top-24 h-96 w-96 rounded-full bg-brand-500/60" />
+          <div className="absolute -bottom-32 -start-24 h-96 w-96 rounded-full bg-brand-800/50" />
           <div className="relative flex h-full flex-col justify-center p-16 text-white">
             <Quote className="h-10 w-10 text-amber-300" />
             <p className="mt-6 font-display text-3xl font-semibold leading-snug text-white">
               {t('auth.quote')}
             </p>
-            <p className="mt-4 text-brand-200">{t('auth.quoteAuthor')}</p>
+            <p className="mt-4 text-brand-100">{t('auth.quoteAuthor')}</p>
             <div className="mt-14 grid max-w-md grid-cols-2 gap-4">
-              <div className="rounded-xl bg-white/5 p-5 ring-1 ring-white/10">
+              <div className="rounded-xl bg-white/10 p-5 ring-1 ring-white/15">
                 <BookOpen className="h-6 w-6 text-amber-300" />
                 <p className="mt-3 font-semibold">{t('auth.freeCourses')}</p>
-                <p className="text-sm text-brand-200">{t('auth.freeCoursesHint')}</p>
+                <p className="text-sm text-brand-100">{t('auth.freeCoursesHint')}</p>
               </div>
-              <div className="rounded-xl bg-white/5 p-5 ring-1 ring-white/10">
+              <div className="rounded-xl bg-white/10 p-5 ring-1 ring-white/15">
                 <Award className="h-6 w-6 text-amber-300" />
                 <p className="mt-3 font-semibold">{t('auth.certificates')}</p>
-                <p className="text-sm text-brand-200">{t('auth.certificatesHint')}</p>
+                <p className="text-sm text-brand-100">{t('auth.certificatesHint')}</p>
               </div>
             </div>
           </div>

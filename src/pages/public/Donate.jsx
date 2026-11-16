@@ -24,10 +24,10 @@ export default function Donate() {
       />
       <section className="container-page grid gap-10 py-16 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <h2 className="text-2xl font-bold">{t('donate.where')}</h2>
+          <h2 className="text-2xl font-semibold">{t('donate.where')}</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {impact.map((i) => (
-              <div key={i.title} className="rounded-2xl border border-slate-200 p-6">
+              <div key={i.title} className="rounded-xl border border-slate-200 p-6">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
                   <i.icon className="h-5 w-5" />
                 </div>
@@ -36,7 +36,7 @@ export default function Donate() {
               </div>
             ))}
           </div>
-          <div className="mt-8 rounded-2xl bg-slate-50 p-6 text-sm text-slate-600">
+          <div className="mt-8 rounded-xl bg-slate-50 p-6 text-sm text-slate-600">
             <p className="font-semibold text-slate-900">{t('donate.otherWays')}</p>
             <p className="mt-1">
               {t('donate.otherWaysText')} <a href="/contact" className="font-semibold text-brand-600 hover:underline">{t('footer.getInTouch')}</a>{t('home.faq.period')}
@@ -45,10 +45,10 @@ export default function Donate() {
         </div>
 
         <aside className="lg:col-span-2">
-          <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-200 shadow-xl">
+          <div className="sticky top-24 overflow-hidden rounded-xl border border-slate-200 shadow-xl">
             <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-7 text-white">
               <Heart className="h-8 w-8" fill="currentColor" />
-              <h3 className="mt-4 text-2xl font-bold text-white">{t('donate.make')}</h3>
+              <h3 className="mt-4 text-2xl font-semibold text-white">{t('donate.make')}</h3>
               <p className="mt-1 text-rose-100">{t('donate.everyAmount')}</p>
             </div>
             <div className="space-y-6 p-7">

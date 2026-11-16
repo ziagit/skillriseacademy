@@ -35,7 +35,7 @@ export default function Teach() {
       <section className="container-page py-16">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {perks.map((p) => (
-            <div key={p.title} className="rounded-2xl border border-slate-200 p-6">
+            <div key={p.title} className="rounded-xl border border-slate-200 p-6">
               <p.icon className="h-7 w-7 text-brand-600" />
               <h3 className="mt-4 font-semibold">{p.title}</h3>
               <p className="mt-1.5 text-sm text-slate-600">{p.text}</p>
@@ -47,7 +47,7 @@ export default function Teach() {
       <section className="bg-slate-50 py-16">
         <div className="container-page grid gap-12 lg:grid-cols-2">
           <div>
-            <h2 className="text-3xl font-bold">{t('home.how.eyebrow')}</h2>
+            <h2 className="text-3xl font-semibold">{t('home.how.eyebrow')}</h2>
             <ol className="mt-8 space-y-6">
               {steps.map((s, i) => (
                 <li key={s} className="flex items-center gap-4">
@@ -56,14 +56,14 @@ export default function Teach() {
                 </li>
               ))}
             </ol>
-            <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
+            <div className="mt-10 rounded-xl border border-slate-200 bg-white p-6">
               <Megaphone className="h-6 w-6 text-amber-500" />
               <p className="mt-3 text-sm text-slate-600">
                 {t('teach.welcome')}
               </p>
             </div>
           </div>
-          <div id="apply" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
+          <div id="apply" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
             {!user ? (
               <div className="py-6 text-center">
                 <h3 className="text-xl font-bold">{t('teach.ready')}</h3>
