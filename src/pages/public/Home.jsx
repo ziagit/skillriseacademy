@@ -583,16 +583,16 @@ function YouTubeVideos() {
   const items = videos || []
   const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, items.length)
   const [paused, setPaused] = useState(false)
-  const [selectedVideo, setSelectedVideo] = useState(null)
+  const [playingVideoId, setPlayingVideoId] = useState(null)
   const desktopCarousel = items.length > 3
 
   useEffect(() => {
-    if (paused || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (paused || playingVideoId || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(() => {
       if (!document.hidden) goTo(active + 1)
     }, 6000)
     return () => clearInterval(id)
-  }, [active, goTo, paused, stops.length])
+  }, [active, goTo, paused, playingVideoId, stops.length])
 
   const cardLayout = desktopCarousel ? 'md:basis-[calc(33.333%-0.834rem)]' : 'md:basis-auto'
   if (loading) {
@@ -632,19 +632,37 @@ function YouTubeVideos() {
           >
             {items.map((video) => {
               const thumbnail = video.thumbnail_url || toYouTubeThumbnailUrl(video.youtube_url)
+              const embedUrl = toYouTubeEmbedUrl(video.youtube_url)
+              const isPlaying = playingVideoId === video.id
               return (
                 <article key={video.id} className={cn('flex shrink-0 basis-full snap-start flex-col rounded-xl border border-slate-200 bg-white p-3', cardLayout)}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedVideo(video)}
-                    aria-label={t('home.videos.watch', { title: video.title })}
-                    className="group relative block aspect-video w-full overflow-hidden rounded-lg bg-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
-                  >
-                    {thumbnail && <img src={thumbnail} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />}
-                    <span className="absolute inset-0 flex items-center justify-center bg-slate-950/20 text-white transition group-hover:bg-slate-950/35">
-                      <CirclePlay className="h-14 w-14 drop-shadow-lg" />
-                    </span>
-                  </button>
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+                    {isPlaying && embedUrl ? (
+                      <iframe
+                        src={`${embedUrl}${embedUrl.includes('?') ? '&' : '?'}autoplay=1&playsinline=1`}
+                        title={video.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        className="absolute inset-0 h-full w-full border-0"
+                      />
+                    ) : embedUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setPlayingVideoId(video.id)}
+                        aria-label={t('home.videos.watch', { title: video.title })}
+                        className="group absolute inset-0 block w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-500/60"
+                      >
+                        {thumbnail && <img src={thumbnail} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />}
+                        <span className="absolute inset-0 flex items-center justify-center bg-slate-950/20 text-white transition group-hover:bg-slate-950/35">
+                          <CirclePlay className="h-14 w-14 drop-shadow-lg" />
+                        </span>
+                      </button>
+                    ) : (
+                      <a href={video.youtube_url} target="_blank" rel="noreferrer" className="flex h-full items-center justify-center text-sm text-white underline">
+                        {t('course.openVideo')}
+                      </a>
+                    )}
+                  </div>
                   <h3 dir="auto" className="mt-3 font-semibold text-slate-900">{video.title}</h3>
                   {video.channel && <p dir="auto" className="mt-1 text-sm text-slate-500">{video.channel}</p>}
                 </article>
@@ -689,9 +707,6 @@ function YouTubeVideos() {
           {t('home.videos.empty')}
         </p>
       )}
-      <Modal open={!!selectedVideo} onClose={() => setSelectedVideo(null)} title={selectedVideo?.title || ''} size="xl">
-        {selectedVideo && <VideoEmbed url={selectedVideo.youtube_url} title={selectedVideo.title} />}
-      </Modal>
     </section>
   )
 }
