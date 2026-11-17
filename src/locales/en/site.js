@@ -45,6 +45,27 @@ export default {
       names: ['Amina K', 'Bilal R', 'Sara M'],
       studying: 'studying right now',
     },
+    partners: {
+      title: 'Organizations we cooperate with',
+      // Sample entries shown until an admin lists real partners in Site settings.
+      samples: ['Community Learning Network', 'Youth Skills Foundation', 'Women in Tech Initiative', 'Open Education Alliance', 'Digital Freelancers Hub', 'Local Media Collective'],
+    },
+    teachers: {
+      title: 'Learn from our teachers',
+      description: 'Practitioners who volunteer their time to teach the skills they use every day.',
+      join: 'Become a teacher',
+    },
+    reviews: {
+      title: 'What our learners say',
+      description: 'Real stories from people building new skills with SkillRise.',
+      // Sample entries shown until an admin adds real reviews in Site settings.
+      samples: [
+        { name: 'Mariam A.', role: 'Graphic Design learner', quote: 'I had never opened a design tool before. Six weeks later I delivered my first paid logo project to a local shop.' },
+        { name: 'Ahmad R.', role: 'Freelancing learner', quote: 'The lessons are short and practical, so I could study on my phone after work. Now I find clients online every month.' },
+        { name: 'Sana K.', role: 'English Language learner', quote: 'Being able to learn for free, at my own pace, made all the difference. My confidence in interviews has grown a lot.' },
+        { name: 'Farid N.', role: 'Artificial Intelligence learner', quote: 'The teacher explained AI tools in a way I could use right away. I automate parts of my job I used to do by hand.' },
+      ],
+    },
     stats: {
       title: 'Join a growing community of learners and teachers',
       learners: 'Learners enrolled',

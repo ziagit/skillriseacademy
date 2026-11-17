@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowRight, Award, BadgeCheck, BookOpen, ChevronLeft, ChevronRight, CirclePlay, Clock, GraduationCap, Heart, Sparkles, Target,
-  Users,
+  ArrowRight, Award, BadgeCheck, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, Clock, GraduationCap, Heart, Quote,
+  Sparkles, Star, Target, Users,
 } from 'lucide-react'
 import { homePathFor, useAuth } from '../../context/AuthContext'
+import { useSettings } from '../../context/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { cn, formatDate, formatNumber } from '../../lib/utils'
@@ -12,12 +13,15 @@ import { useI18n } from '../../lib/i18n'
 import { COURSE_CARD_SELECT, CategoryIcon, CourseCard, CourseListItem, categoryColor, useCategories } from '../../components/shared'
 import { Avatar, Button } from '../../components/ui'
 
+const H2 = 'text-xl font-semibold sm:text-2xl lg:text-[28px]'
+const SECTION = 'container-page pt-10 md:pt-14'
+
 function SectionHeading({ title, description, action }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
       <div>
-        <h2 className="text-2xl font-semibold sm:text-[28px]">{title}</h2>
-        {description && <p className="mt-1.5 max-w-2xl text-slate-600">{description}</p>}
+        <h2 className={H2}>{title}</h2>
+        {description && <p className="mt-1.5 max-w-2xl text-sm text-slate-600 sm:text-base">{description}</p>}
       </div>
       {action}
     </div>
@@ -32,16 +36,27 @@ function ViewAll({ to, children }) {
   )
 }
 
+// Like Coursera on phones: a swipeable row that peeks at the next card, turning into a grid from md up.
+function Rail({ className, children }) {
+  return (
+    <div className={cn('no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:overflow-visible md:px-0 md:pb-0', className)}>
+      {children}
+    </div>
+  )
+}
+
+const RAIL_ITEM = 'shrink-0 snap-start md:basis-auto'
+
 const OUTLINE_WHITE = 'bg-transparent text-white ring-1 ring-inset ring-white/70 hover:bg-white/10'
 
 function Slide({ className, eyebrow, title, text, actions, art, heading: Heading = 'h2', label }) {
   return (
-    <div role="group" aria-roledescription="slide" aria-label={label} className={cn('relative flex min-h-[300px] shrink-0 basis-[88%] snap-start overflow-hidden rounded-2xl text-white sm:basis-[80%] lg:basis-[calc(50%-8px)] xl:basis-[47%]', className)}>
-      <div className="relative z-10 flex flex-col justify-center p-7 sm:max-w-[62%] sm:p-9">
+    <div role="group" aria-roledescription="slide" aria-label={label} className={cn('relative flex min-h-[440px] shrink-0 basis-[80%] snap-start flex-col overflow-hidden rounded-2xl text-white sm:min-h-[300px] sm:basis-[80%] sm:flex-row lg:basis-[calc(50%-8px)] xl:basis-[47%]', className)}>
+      <div className="relative z-10 flex flex-col p-6 sm:max-w-[62%] sm:justify-center sm:p-9">
         {eyebrow && <p className="text-sm font-semibold text-amber-300">{eyebrow}</p>}
-        <Heading className="mt-2 text-[26px] font-semibold leading-tight text-white sm:text-[32px]">{title}</Heading>
-        <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">{text}</p>
-        <div className="mt-6 flex flex-wrap gap-3">{actions}</div>
+        <Heading className="mt-2 text-2xl font-semibold leading-tight text-white sm:text-[32px]">{title}</Heading>
+        <p className="mt-3 hidden text-sm leading-relaxed text-white/80 sm:block sm:text-base">{text}</p>
+        <div className="mt-5 flex flex-wrap gap-3 sm:mt-6">{actions}</div>
       </div>
       {art}
     </div>
@@ -172,6 +187,8 @@ function HeroCarousel() {
   )
 }
 
+const ART = 'pointer-events-none relative mt-auto flex h-48 items-center justify-center sm:absolute sm:inset-y-0 sm:end-0 sm:mt-0 sm:h-auto sm:w-[40%]'
+
 function Circles({ a, b }) {
   return (
     <>
@@ -183,8 +200,8 @@ function Circles({ a, b }) {
 
 function IconArt({ icon: Icon, tone }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 hidden w-[40%] items-center justify-center sm:flex">
-      <div className="flex h-32 w-32 rotate-6 items-center justify-center rounded-3xl bg-white shadow-2xl">
+    <div aria-hidden className={ART}>
+      <div className="flex h-28 w-28 rotate-6 items-center justify-center rounded-3xl bg-white shadow-2xl sm:h-32 sm:w-32">
         <Icon className={cn('h-16 w-16', tone)} strokeWidth={1.75} />
       </div>
     </div>
@@ -194,7 +211,7 @@ function IconArt({ icon: Icon, tone }) {
 function CertificateArt() {
   const { t } = useI18n()
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 hidden w-[40%] items-center sm:flex">
+    <div aria-hidden className={ART}>
       <div className="relative w-full">
         <div className="relative mx-auto w-44 rotate-6 rounded-lg bg-white p-4 text-slate-900 shadow-2xl">
           <Award className="h-7 w-7 text-brand-600" />
@@ -218,7 +235,7 @@ function CertificateArt() {
 function TeacherArt() {
   const { t } = useI18n()
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 hidden w-[40%] items-center sm:flex">
+    <div aria-hidden className={ART}>
       <div className="mx-auto w-44 space-y-2">
         {t('home.mock.lessons').map((title, i) => (
           <div key={title} className={cn('flex items-center gap-2 rounded-lg p-2.5 text-xs shadow-lg', i === 1 ? 'bg-brand-600 text-white' : 'bg-white text-slate-700')}>
@@ -242,7 +259,7 @@ function TeacherArt() {
 function Panel({ title, to, courses }) {
   if (!courses.length) return null
   return (
-    <div className="rounded-xl bg-brand-50 p-4">
+    <div className={cn(RAIL_ITEM, 'basis-[88%] rounded-xl bg-brand-50 p-4 sm:basis-[60%]')}>
       <Link to={to} className="group mb-3 inline-flex items-center gap-1.5 font-semibold text-slate-900">
         {title} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
       </Link>
@@ -262,13 +279,13 @@ function NewAndPopular({ courses, counts }) {
   const newest = [...courses].sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 3)
   const featured = courses.filter((c) => c.featured).slice(0, 3)
   return (
-    <section className="container-page pt-12">
-      <h2 className="mb-5 text-2xl font-semibold">{t('home.popular.title')}</h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <section className="container-page pt-8 md:pt-12">
+      <h2 className="mb-4 text-xl font-semibold sm:mb-5 sm:text-2xl">{t('home.popular.title')}</h2>
+      <Rail className="md:grid-cols-2 lg:grid-cols-3">
         <Panel title={t('home.popular.mostPopular')} to="/courses?sort=popular" courses={popular} />
         <Panel title={t('home.popular.newest')} to="/courses?sort=newest" courses={newest} />
         <Panel title={t('home.popular.featured')} to="/courses" courses={featured.length ? featured : courses.slice(3, 6)} />
-      </div>
+      </Rail>
     </section>
   )
 }
@@ -284,13 +301,13 @@ function ImpactStats() {
   ].filter((i) => i.value > 0)
   if (!items.length) return null
   return (
-    <section className="container-page pt-14">
-      <h2 className="text-center text-xl font-semibold">{t('home.stats.title')}</h2>
+    <section className={SECTION}>
+      <h2 className="text-center text-lg font-semibold sm:text-xl">{t('home.stats.title')}</h2>
       <div className={cn('mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200', items.length === 3 ? 'grid-cols-3' : 'md:grid-cols-4')}>
         {items.map((i) => (
-          <div key={i.label} className="flex flex-col items-center bg-white px-4 py-6 text-center">
+          <div key={i.label} className="flex flex-col items-center bg-white px-3 py-5 text-center sm:px-4 sm:py-6">
             <i.icon className="h-6 w-6 text-brand-600" />
-            <p className="mt-2 text-3xl font-bold text-slate-900">{formatNumber(i.value)}</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{formatNumber(i.value)}</p>
             <p className="text-sm text-slate-600">{i.label}</p>
           </div>
         ))}
@@ -304,9 +321,17 @@ function ExploreCategories({ courses }) {
   const categories = useCategories()
   const counts = courses.reduce((acc, c) => ({ ...acc, [c.category?.slug]: (acc[c.category?.slug] || 0) + 1 }), {})
   return (
-    <section className="container-page pt-14">
+    <section className={SECTION}>
       <SectionHeading title={t('home.categories.exploreTitle')} description={t('home.categories.description')} action={<ViewAll to="/courses">{t('home.categories.all')}</ViewAll>} />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:hidden">
+        {categories.map((cat) => (
+          <Link key={cat.slug} to={`/courses?category=${cat.slug}`} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand-50 px-4 text-sm font-medium text-slate-900 transition hover:bg-brand-100">
+            <CategoryIcon name={cat.icon} className="h-4 w-4 text-brand-700" />
+            <span dir="auto" className="whitespace-nowrap">{cat.name}</span>
+          </Link>
+        ))}
+      </div>
+      <div className="hidden gap-3 md:grid md:grid-cols-3 lg:grid-cols-5">
         {categories.map((cat) => {
           const c = categoryColor(cat.color)
           return (
@@ -333,13 +358,13 @@ function CourseGrid({ courses, counts }) {
   const sorted = [...courses].sort((a, b) => (b.featured - a.featured) || (counts[b.id] || 0) - (counts[a.id] || 0))
   const more = Math.min(8, sorted.length - visible)
   return (
-    <section className="container-page pt-14">
+    <section className={SECTION}>
       <SectionHeading title={t('home.featured.gridTitle')} description={t('home.featured.gridSubtitle')} />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <Rail className="md:grid-cols-2 md:gap-5 lg:grid-cols-4">
         {sorted.slice(0, visible).map((c) => (
-          <CourseCard key={c.id} course={c} students={counts[c.id]} />
+          <CourseCard key={c.id} course={c} students={counts[c.id]} className={cn(RAIL_ITEM, 'basis-[72%] sm:basis-[45%]')} />
         ))}
-      </div>
+      </Rail>
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {more > 0 && (
           <Button onClick={() => setVisible((v) => v + 8)}>{t('home.featured.showMore', { count: more })}</Button>
@@ -364,22 +389,22 @@ function WhySkillRise() {
     { title: t('home.how.step3Title'), text: t('home.how.step3Text') },
   ]
   return (
-    <section className="mt-16 bg-brand-50/60 py-16">
-      <div className="container-page grid gap-12 lg:grid-cols-2">
+    <section className="mt-12 bg-brand-50/60 py-12 md:mt-16 md:py-16">
+      <div className="container-page grid gap-10 lg:grid-cols-2 lg:gap-12">
         <div>
-          <h2 className="text-2xl font-semibold sm:text-[28px]">{t('home.why.title')}</h2>
-          <p className="mt-3 max-w-xl text-slate-600">{t('home.mission.text')}</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <h2 className={H2}>{t('home.why.title')}</h2>
+          <p className="mt-3 max-w-xl text-sm text-slate-600 sm:text-base">{t('home.mission.text')}</p>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4">
             {values.map((v) => (
-              <div key={v.title} className="rounded-lg bg-white p-5 shadow-card">
+              <div key={v.title} className="rounded-lg bg-white p-4 shadow-card sm:p-5">
                 <v.icon className="h-6 w-6 text-brand-600" />
-                <h3 className="mt-3 font-semibold">{v.title}</h3>
-                <p className="mt-1 text-sm text-slate-600">{v.text}</p>
+                <h3 className="mt-3 text-sm font-semibold sm:text-base">{v.title}</h3>
+                <p className="mt-1 text-xs text-slate-600 sm:text-sm">{v.text}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="rounded-2xl bg-white p-7 shadow-card sm:p-9">
+        <div className="rounded-2xl bg-white p-6 shadow-card sm:p-9">
           <h3 className="text-xl font-semibold">{t('home.how.title')}</h3>
           <p className="mt-2 text-sm text-slate-600">{t('home.how.description')}</p>
           <ol className="mt-7 space-y-6">
@@ -419,20 +444,20 @@ function LatestPosts() {
   )
   if (!data?.length) return null
   return (
-    <section className="container-page pt-16">
+    <section className={SECTION}>
       <SectionHeading title={t('home.blog.title')} action={<ViewAll to="/blog">{t('home.blog.read')}</ViewAll>} />
-      <div className="grid gap-5 md:grid-cols-3">
+      <Rail className="md:grid-cols-3 md:gap-5">
         {data.map((p) => (
-          <BlogCard key={p.id} post={p} />
+          <BlogCard key={p.id} post={p} className={cn(RAIL_ITEM, 'basis-[80%] sm:basis-[45%]')} />
         ))}
-      </div>
+      </Rail>
     </section>
   )
 }
 
-export function BlogCard({ post }) {
+export function BlogCard({ post, className }) {
   return (
-    <Link to={`/blog/${post.slug}`} className="group flex flex-col rounded-lg border border-slate-200 bg-white p-3 transition hover:shadow-lift">
+    <Link to={`/blog/${post.slug}`} className={cn('group flex flex-col rounded-lg border border-slate-200 bg-white p-3 transition hover:shadow-lift', className)}>
       {post.cover_url ? (
         <img src={post.cover_url} alt="" className="aspect-[16/9] w-full rounded-md object-cover" />
       ) : (
@@ -453,19 +478,135 @@ export function BlogCard({ post }) {
   )
 }
 
+// Admin-editable lists live in site_settings as one entry per line, fields separated by "|".
+function parseLines(text, keys) {
+  return (text || '')
+    .split('\n')
+    .map((line) => line.split('|').map((part) => part.trim()))
+    .filter((parts) => parts[0])
+    .map((parts) => Object.fromEntries(keys.map((k, i) => [k, parts[i] || ''])))
+}
+
+function Organizations() {
+  const { t } = useI18n()
+  const { settings } = useSettings()
+  const saved = parseLines(settings.partners, ['name', 'url', 'logo'])
+  const orgs = saved.length ? saved : t('home.partners.samples').map((name) => ({ name }))
+  return (
+    <section className={SECTION}>
+      <h2 className="mb-4 text-lg font-semibold sm:mb-5 sm:text-xl">{t('home.partners.title')}</h2>
+      <ul className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:px-0">
+        {orgs.map((org) => {
+          const body = (
+            <>
+              {org.logo ? (
+                <img src={org.logo} alt="" className="h-7 w-7 shrink-0 rounded object-contain" />
+              ) : (
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-brand-600 text-xs font-bold text-white">{org.name.charAt(0)}</span>
+              )}
+              <span dir="auto" className="whitespace-nowrap text-sm font-semibold text-slate-900">{org.name}</span>
+            </>
+          )
+          const pill = 'flex h-12 items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 transition'
+          return (
+            <li key={org.name} className="shrink-0">
+              {org.url ? (
+                <a href={org.url} target="_blank" rel="noreferrer" className={cn(pill, 'hover:border-brand-200 hover:shadow-lift')}>{body}</a>
+              ) : (
+                <div className={pill}>{body}</div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+function Teachers({ counts }) {
+  const { t } = useI18n()
+  const { data } = useQuery(
+    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, courses:courses!courses_teacher_id_fkey(id, status)').eq('role', 'teacher')),
+    [],
+  )
+  const teachers = (data || [])
+    .map((p) => {
+      const published = p.courses.filter((c) => c.status === 'published')
+      return { ...p, courseCount: published.length, learners: published.reduce((sum, c) => sum + (counts[c.id] || 0), 0) }
+    })
+    .filter((p) => p.courseCount > 0)
+    .sort((a, b) => b.learners - a.learners || b.courseCount - a.courseCount)
+    .slice(0, 8)
+  if (!teachers.length) return null
+  return (
+    <section className={SECTION}>
+      <SectionHeading title={t('home.teachers.title')} description={t('home.teachers.description')} action={<ViewAll to="/teach">{t('home.teachers.join')}</ViewAll>} />
+      <Rail className="md:grid-cols-3 lg:grid-cols-4">
+        {teachers.map((p) => (
+          <Link
+            key={p.id}
+            to={`/courses?q=${encodeURIComponent(p.full_name)}`}
+            className={cn(RAIL_ITEM, 'group flex basis-[62%] flex-col items-center rounded-lg border border-slate-200 bg-white p-5 text-center transition hover:shadow-lift sm:basis-[40%]')}
+          >
+            <Avatar src={p.avatar_url} name={p.full_name} size="xl" className="ring-4 ring-brand-50" />
+            <h3 dir="auto" className="mt-3 font-semibold text-slate-900 group-hover:underline">{p.full_name}</h3>
+            {p.headline && <p dir="auto" className="mt-1 line-clamp-2 text-sm text-slate-600">{p.headline}</p>}
+            <p className="mt-auto flex flex-wrap justify-center gap-x-1.5 pt-3 text-xs text-slate-500">
+              <span>{t('home.categories.courseCount', { count: p.courseCount })}</span>
+              {p.learners > 0 && <span>· {t('course.learners', { count: p.learners })}</span>}
+            </p>
+          </Link>
+        ))}
+      </Rail>
+    </section>
+  )
+}
+
+function Reviews() {
+  const { t } = useI18n()
+  const { settings } = useSettings()
+  const saved = parseLines(settings.testimonials, ['name', 'role', 'quote', 'photo'])
+  const reviews = saved.length ? saved : t('home.reviews.samples')
+  return (
+    <section className={SECTION}>
+      <SectionHeading title={t('home.reviews.title')} description={t('home.reviews.description')} />
+      <Rail className="md:grid-cols-2 lg:grid-cols-4">
+        {reviews.map((r, i) => (
+          <figure key={i} className={cn(RAIL_ITEM, 'flex basis-[85%] flex-col rounded-lg border border-slate-200 bg-white p-5 sm:basis-[60%]')}>
+            <div className="flex items-center gap-3">
+              <Avatar src={r.photo || undefined} name={r.name} size="lg" />
+              <figcaption className="min-w-0">
+                <p dir="auto" className="font-semibold text-slate-900">{r.name}</p>
+                {r.role && <p dir="auto" className="line-clamp-2 text-sm text-slate-500">{r.role}</p>}
+              </figcaption>
+            </div>
+            <div className="mt-4 flex gap-0.5 text-amber-500" aria-hidden>
+              {[1, 2, 3, 4, 5].map((n) => <Star key={n} className="h-4 w-4 fill-current" />)}
+            </div>
+            <blockquote dir="auto" className="relative mt-3 text-[15px] leading-relaxed text-slate-700">
+              <Quote className="absolute -top-1 end-0 h-6 w-6 text-brand-100" aria-hidden />
+              “{r.quote}”
+            </blockquote>
+          </figure>
+        ))}
+      </Rail>
+    </section>
+  )
+}
+
 function Faq() {
   const { t } = useI18n()
   return (
-    <section className="container-page pt-16">
-      <h2 className="text-2xl font-semibold sm:text-[28px]">{t('home.faq.title')}</h2>
-      <div className="mt-6 divide-y divide-slate-200 border-y border-slate-200">
+    <section className={SECTION}>
+      <h2 className={H2}>{t('home.faq.title')}</h2>
+      <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200 sm:mt-6">
         {t('home.faq.items').map((f) => (
           <details key={f.q} className="group py-1 [&_summary::-webkit-details-marker]:hidden">
-            <summary className="flex cursor-pointer items-center gap-4 py-4 text-lg font-semibold text-slate-900 hover:text-brand-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center text-2xl font-normal leading-none text-slate-600 transition group-open:rotate-45">+</span>
+            <summary className="flex cursor-pointer items-center gap-3 py-3.5 text-base font-semibold text-slate-900 hover:text-brand-700 sm:gap-4 sm:py-4 sm:text-lg">
+              <ChevronDown className="h-5 w-5 shrink-0 text-slate-700 transition group-open:rotate-180" />
               {f.q}
             </summary>
-            <p className="pb-5 ps-10 leading-relaxed text-slate-600">{f.a}</p>
+            <p className="pb-5 ps-8 text-sm leading-relaxed text-slate-600 sm:ps-9 sm:text-base">{f.a}</p>
           </details>
         ))}
       </div>
@@ -480,12 +621,12 @@ function BottomCta() {
   const { t } = useI18n()
   const { user } = useAuth()
   return (
-    <section className="container-page py-16">
-      <div className="relative overflow-hidden rounded-2xl bg-brand-600 px-8 py-12 text-white sm:px-12">
+    <section className="container-page py-12 md:py-16">
+      <div className="relative overflow-hidden rounded-2xl bg-brand-600 px-6 py-10 text-white sm:px-12 sm:py-12">
         <div className="absolute -bottom-24 -end-10 h-72 w-72 rounded-full bg-brand-500/60" />
         <div className="absolute -top-16 end-48 h-40 w-40 rounded-full bg-brand-800/50" />
         <div className="relative max-w-2xl">
-          <h2 className="text-2xl font-semibold leading-snug text-white sm:text-3xl">{t('home.cta.title')}</h2>
+          <h2 className="text-xl font-semibold leading-snug text-white sm:text-3xl">{t('home.cta.title')}</h2>
           <p className="mt-3 text-brand-100">{t('home.cta.text')}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             {!user && <Button to="/signup" variant="white" size="lg">{t('home.banner.cta')}</Button>}
@@ -513,10 +654,13 @@ export default function Home() {
     <>
       <HeroCarousel />
       <NewAndPopular courses={courses} counts={counts} />
-      <ImpactStats />
+      <Organizations />
       <ExploreCategories courses={courses} />
       <CourseGrid courses={courses} counts={counts} />
+      <Teachers counts={counts} />
+      <ImpactStats />
       <WhySkillRise />
+      <Reviews />
       <LatestPosts />
       <Faq />
       <BottomCta />

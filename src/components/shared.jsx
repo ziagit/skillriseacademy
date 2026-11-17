@@ -100,13 +100,13 @@ function courseMinutes(course) {
 }
 
 // Coursera-style vertical card: inset thumbnail, teacher line, title, then a quiet meta line.
-export function CourseCard({ course, students }) {
+export function CourseCard({ course, students, className }) {
   const { t } = useI18n()
   const lessons = course.lessons ?? []
   const minutes = courseMinutes(course)
   const meta = [levelLabel(course.level), t('course.type'), minutes ? formatMinutes(minutes) : lessons.length > 0 && t('course.lessonCount', { count: lessons.length })].filter(Boolean)
   return (
-    <Link to={`/courses/${course.slug}`} className="group flex flex-col rounded-lg border border-slate-200 bg-white p-3 transition hover:shadow-lift">
+    <Link to={`/courses/${course.slug}`} className={cn('group flex flex-col rounded-lg border border-slate-200 bg-white p-3 transition hover:shadow-lift', className)}>
       <div className="relative overflow-hidden rounded-md">
         <CourseThumbnail course={course} className="transition duration-500 group-hover:scale-[1.03]" />
         <span className="absolute start-2 top-2 rounded bg-white px-2 py-0.5 text-xs font-semibold text-slate-900 shadow-sm">{t('common.free')}</span>

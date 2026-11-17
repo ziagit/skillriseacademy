@@ -137,11 +137,13 @@ function ExploreMenu() {
 function Navbar() {
   const { user, profile, signOut } = useAuth()
   const { t } = useI18n()
-  const [open, setOpen] = useState(false)
+  // Phones get Coursera's compact header: menu at the start, search behind an icon at the end.
+  const [panel, setPanel] = useState(null)
   const location = useLocation()
+  const toggle = (name) => setPanel((p) => (p === name ? null : name))
 
   useEffect(() => {
-    setOpen(false)
+    setPanel(null)
   }, [location.pathname, location.search])
 
   return (
@@ -149,7 +151,10 @@ function Navbar() {
       <TopBar />
       <div className="border-b border-slate-200 bg-white">
         <div className="container-page flex h-16 items-center gap-3 lg:gap-5">
-          <Logo className="[&_img]:h-9" />
+          <button className="-ms-2 rounded-md p-2 text-slate-700 hover:bg-slate-100 md:hidden" onClick={() => toggle('menu')} aria-label={t('nav.toggleMenu')} aria-expanded={panel === 'menu'}>
+            {panel === 'menu' ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+          <Logo className="[&_img]:h-8 md:[&_img]:h-9" />
           <div className="hidden md:block">
             <ExploreMenu />
           </div>
@@ -173,14 +178,19 @@ function Navbar() {
               </>
             )}
           </div>
-          <div className="ms-auto flex items-center gap-1 md:hidden">
-            <button className="rounded-md p-2 text-slate-700 hover:bg-slate-100" onClick={() => setOpen(!open)} aria-label={t('nav.toggleMenu')} aria-expanded={open}>
-              {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
+          <button className="-me-2 ms-auto rounded-md p-2 text-slate-700 hover:bg-slate-100 md:hidden" onClick={() => toggle('search')} aria-label={t('nav.search')} aria-expanded={panel === 'search'}>
+            {panel === 'search' ? <X className="h-6 w-6" /> : <Search className="h-6 w-6" />}
+          </button>
         </div>
       </div>
-      {open && <MobileMenu user={user} profile={profile} signOut={signOut} />}
+      {panel === 'search' && (
+        <div className="border-b border-slate-200 bg-white py-3 shadow-lg md:hidden">
+          <div className="container-page">
+            <SearchBar autoFocus />
+          </div>
+        </div>
+      )}
+      {panel === 'menu' && <MobileMenu user={user} profile={profile} signOut={signOut} />}
     </header>
   )
 }
@@ -191,7 +201,6 @@ function MobileMenu({ user, profile, signOut }) {
   return (
     <div className="max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg md:hidden">
       <div className="container-page space-y-5 py-4">
-        <SearchBar />
         <div>
           <p className="mb-1 text-xs font-semibold uppercase text-slate-500">{t('nav.explore')}</p>
           <div className="grid grid-cols-2 gap-x-2">
