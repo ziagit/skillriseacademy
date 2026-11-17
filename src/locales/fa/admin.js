@@ -139,6 +139,7 @@ export default {
     },
     home: {
       description: 'هر آنچه در صفحهٔ اصلی عمومی نمایش داده می‌شود: اسلایدها، همکاران، نظرات، پرسش‌های متداول و مدرسان.',
+      invalidYoutubeUrl: 'یک پیوند معتبر ویدیوی یوتیوب وارد کنید.',
       view: 'مشاهدهٔ صفحهٔ اصلی',
       tabs: { slides: 'اسلایدها', partners: 'همکاران', reviews: 'نظرات', faqs: 'پرسش‌های متداول', teachers: 'مدرسان' },
       hints: {
@@ -182,6 +183,7 @@ export default {
         quote: 'نظر',
         rating: 'امتیاز',
         photo_url: 'عکس',
+        youtube_url: 'پیوند ویدیوی یوتیوب',
         question: 'پرسش',
         answer: 'پاسخ',
         headline: 'عنوان معرفی',
@@ -189,6 +191,7 @@ export default {
       fieldHints: {
         title: 'از {name} برای خوشامدگویی به کاربر واردشده با نام کوچکش استفاده کنید.',
         image_url: 'اختیاری. جایگزین تصویرسازی می‌شود.',
+        youtube_url: 'اختیاری. پیوند ویدیوی عمومی یا فهرست‌نشدهٔ یوتیوب را وارد کنید تا با انتخاب عکس مدرس باز شود.',
       },
       options: {
         lang: { all: 'همهٔ زبان‌ها' },
@@ -218,6 +221,7 @@ export default {
         donate_bank_details: 'اطلاعات انتقال بانکی',
         facebook_url: 'فیسبوک',
         instagram_url: 'اینستاگرام',
+        tiktok_url: 'تیک‌تاک',
         youtube_url: 'یوتیوب',
         linkedin_url: 'لینکدین',
         x_url: 'ایکس (توییتر)',

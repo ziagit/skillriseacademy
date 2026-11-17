@@ -1,20 +1,42 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowRight, Award, BadgeCheck, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, Clock, GraduationCap, Heart, Quote,
-  Sparkles, Star, Target, Users,
+  ArrowRight, Award, BadgeCheck, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, GraduationCap, Heart, Quote,
+  Star, Users,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { SLIDE_THEMES } from '../../lib/constants'
-import { cn, formatDate, formatNumber } from '../../lib/utils'
+import { cn, formatDate, formatNumber, toYouTubeEmbedUrl } from '../../lib/utils'
 import { useI18n } from '../../lib/i18n'
-import { COURSE_CARD_SELECT, CategoryIcon, CourseCard, CourseListItem, categoryColor, useCategories } from '../../components/shared'
-import { Avatar, Button } from '../../components/ui'
+import { COURSE_CARD_SELECT, CategoryIcon, CourseCard, CourseListItem, VideoEmbed, categoryColor, useCategories } from '../../components/shared'
+import { Avatar, Button, Modal } from '../../components/ui'
 
 const H2 = 'text-xl font-semibold sm:text-2xl lg:text-[28px]'
 const SECTION = 'container-page pt-10 md:pt-14'
+const HOME_YOUTUBE_VIDEOS = [
+  {
+    title: 'But what is a neural network? | Deep learning chapter 1',
+    channel: '3Blue1Brown',
+    url: 'https://www.youtube.com/watch?v=aircAruvnKk',
+  },
+  {
+    title: 'Learn Python - Full Course for Beginners [Tutorial]',
+    channel: 'freeCodeCamp.org',
+    url: 'https://www.youtube.com/watch?v=rfscVS0vtbw',
+  },
+  {
+    title: 'HTML Full Course - Build a Website Tutorial',
+    channel: 'freeCodeCamp.org',
+    url: 'https://www.youtube.com/watch?v=pQN-pnXPaVg',
+  },
+  {
+    title: 'Learn JavaScript - Full Course for Beginners',
+    channel: 'freeCodeCamp.org',
+    url: 'https://www.youtube.com/watch?v=PkZNo7MFNFg',
+  },
+]
 
 function SectionHeading({ title, description, action }) {
   return (
@@ -43,6 +65,55 @@ function Rail({ className, children }) {
       {children}
     </div>
   )
+}
+
+function useCarouselTrack(dir, itemCount) {
+  const trackRef = useRef(null)
+  const [active, setActive] = useState(0)
+  const [stops, setStops] = useState([0])
+  const sign = dir === 'rtl' ? -1 : 1
+
+  const measure = useCallback(() => {
+    const track = trackRef.current
+    if (!track?.children.length) return
+    const box = track.getBoundingClientRect()
+    const max = Math.max(0, track.scrollWidth - track.clientWidth)
+    const scrolled = Math.abs(track.scrollLeft)
+    const positions = [...track.children].map((el) => {
+      const rect = el.getBoundingClientRect()
+      return Math.min(max, Math.round((dir === 'rtl' ? box.right - rect.right : rect.left - box.left) + scrolled))
+    })
+    const nextStops = positions.filter((position, i) => i === 0 || position > positions[i - 1] + 4)
+    const currentPosition = Math.abs(track.scrollLeft)
+    setStops(nextStops)
+    setActive(nextStops.reduce((best, stop, i) => (
+      Math.abs(stop - currentPosition) < Math.abs(nextStops[best] - currentPosition) ? i : best
+    ), 0))
+  }, [dir])
+
+  useEffect(() => {
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [itemCount, measure])
+
+  const goTo = useCallback((index) => {
+    const count = stops.length
+    if (!count) return
+    const stop = stops[((index % count) + count) % count]
+    trackRef.current?.scrollTo({ left: sign * stop, behavior: 'smooth' })
+  }, [sign, stops])
+
+  const onScroll = useCallback(() => {
+    const track = trackRef.current
+    if (!track || !stops.length) return
+    const position = Math.abs(track.scrollLeft)
+    setActive(stops.reduce((best, stop, i) => (
+      Math.abs(stop - position) < Math.abs(stops[best] - position) ? i : best
+    ), 0))
+  }, [stops])
+
+  return { trackRef, active, stops, goTo, onScroll }
 }
 
 const RAIL_ITEM = 'shrink-0 snap-start md:basis-auto'
@@ -385,59 +456,6 @@ function CourseGrid({ courses, counts }) {
   )
 }
 
-function WhySkillRise() {
-  const { t } = useI18n()
-  const values = [
-    { icon: Target, title: t('home.mission.f1Title'), text: t('home.mission.f1Text') },
-    { icon: Sparkles, title: t('home.mission.f2Title'), text: t('home.mission.f2Text') },
-    { icon: GraduationCap, title: t('home.mission.f3Title'), text: t('home.mission.f3Text') },
-    { icon: Clock, title: t('home.mission.f4Title'), text: t('home.mission.f4Text') },
-  ]
-  const steps = [
-    { title: t('home.how.step1Title'), text: t('home.how.step1Text') },
-    { title: t('home.how.step2Title'), text: t('home.how.step2Text') },
-    { title: t('home.how.step3Title'), text: t('home.how.step3Text') },
-  ]
-  return (
-    <section className="mt-12 bg-brand-50/60 py-12 md:mt-16 md:py-16">
-      <div className="container-page grid gap-10 lg:grid-cols-2 lg:gap-12">
-        <div>
-          <h2 className={H2}>{t('home.why.title')}</h2>
-          <p className="mt-3 max-w-xl text-sm text-slate-600 sm:text-base">{t('home.mission.text')}</p>
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4">
-            {values.map((v) => (
-              <div key={v.title} className="rounded-lg bg-white p-4 shadow-card sm:p-5">
-                <v.icon className="h-6 w-6 text-brand-600" />
-                <h3 className="mt-3 text-sm font-semibold sm:text-base">{v.title}</h3>
-                <p className="mt-1 text-xs text-slate-600 sm:text-sm">{v.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-2xl bg-white p-6 shadow-card sm:p-9">
-          <h3 className="text-xl font-semibold">{t('home.how.title')}</h3>
-          <p className="mt-2 text-sm text-slate-600">{t('home.how.description')}</p>
-          <ol className="mt-7 space-y-6">
-            {steps.map((s, i) => (
-              <li key={s.title} className="flex gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">{formatNumber(i + 1)}</span>
-                <div>
-                  <p className="font-semibold text-slate-900">{s.title}</p>
-                  <p className="mt-1 text-sm text-slate-600">{s.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-8 flex flex-wrap gap-3 border-t border-slate-100 pt-6">
-            <Button to="/signup">{t('home.hero.createAccount')}</Button>
-            <Button to="/about" variant="outline">{t('home.mission.about')}</Button>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function LatestPosts() {
   const { t } = useI18n()
   const { data } = useQuery(
@@ -489,12 +507,36 @@ export function BlogCard({ post, className }) {
 }
 
 function Organizations({ orgs }) {
-  const { t } = useI18n()
+  const { t, dir } = useI18n()
+  const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, orgs?.length || 0)
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
+    if (paused || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => {
+      if (!document.hidden) goTo(active + 1)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [active, goTo, paused, stops.length])
+
   if (!orgs?.length) return null
   return (
-    <section className={SECTION}>
-      <h2 className="mb-4 text-lg font-semibold sm:mb-5 sm:text-xl">{t('home.partners.title')}</h2>
-      <ul className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:px-0">
+    <section
+      className={SECTION}
+      aria-roledescription="carousel"
+      aria-label={t('home.partners.carousel')}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onTouchStart={() => setPaused(true)}
+    >
+      <SectionHeading title={t('home.partners.title')} />
+      <ul
+        ref={trackRef}
+        onScroll={onScroll}
+        dir={dir}
+        className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:px-0"
+      >
         {orgs.map((org) => {
           const body = (
             <>
@@ -503,12 +545,12 @@ function Organizations({ orgs }) {
               ) : (
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-brand-600 text-xs font-bold text-white">{org.name.charAt(0)}</span>
               )}
-              <span dir="auto" className="whitespace-nowrap text-sm font-semibold text-slate-900">{org.name}</span>
+              <span dir="auto" className="min-w-0 truncate text-sm font-semibold text-slate-900">{org.name}</span>
             </>
           )
-          const pill = 'flex h-12 items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 transition'
+          const pill = 'flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 transition'
           return (
-            <li key={org.id} className="shrink-0">
+            <li key={org.id} className="w-[240px] shrink-0 snap-start">
               {org.website_url ? (
                 <a href={org.website_url} target="_blank" rel="noreferrer" className={cn(pill, 'hover:border-brand-200 hover:shadow-lift')}>{body}</a>
               ) : (
@@ -518,14 +560,135 @@ function Organizations({ orgs }) {
           )
         })}
       </ul>
+      {stops.length > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => { setPaused(true); goTo(active - 1) }}
+            aria-label={t('home.partners.prev')}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
+          >
+            <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" />
+          </button>
+          <div className="flex items-center justify-center gap-2">
+            {stops.map((stop, i) => (
+              <button
+                key={stop}
+                type="button"
+                onClick={() => { setPaused(true); goTo(i) }}
+                aria-label={t('home.partners.goTo', { n: i + 1 })}
+                aria-current={active === i}
+                className={cn('h-2 rounded-full transition-all', active === i ? 'w-7 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400')}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => { setPaused(true); goTo(active + 1) }}
+            aria-label={t('home.partners.next')}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
+          >
+            <ChevronRight className="h-5 w-5 rtl:-scale-x-100" />
+          </button>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function YouTubeVideos() {
+  const { t, dir } = useI18n()
+  const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, HOME_YOUTUBE_VIDEOS.length)
+  const [paused, setPaused] = useState(false)
+  const desktopCarousel = HOME_YOUTUBE_VIDEOS.length > 3
+
+  useEffect(() => {
+    if (paused || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => {
+      if (!document.hidden) goTo(active + 1)
+    }, 6000)
+    return () => clearInterval(id)
+  }, [active, goTo, paused, stops.length])
+
+  const cardLayout = desktopCarousel ? 'md:basis-[calc(33.333%-0.834rem)]' : 'md:basis-auto'
+  return (
+    <section
+      className={SECTION}
+      aria-roledescription="carousel"
+      aria-label={t('home.videos.carousel')}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onTouchStart={() => setPaused(true)}
+    >
+      <SectionHeading title={t('home.videos.title')} description={t('home.videos.description')} />
+      {HOME_YOUTUBE_VIDEOS.length ? (
+        <>
+          <div
+            ref={trackRef}
+            onScroll={onScroll}
+            dir={dir}
+            className={cn(
+              'no-scrollbar -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:px-0',
+              desktopCarousel ? 'md:flex' : 'md:grid md:grid-cols-3 md:overflow-visible',
+            )}
+          >
+            {HOME_YOUTUBE_VIDEOS.map((video) => (
+              <article key={video.url} className={cn('flex shrink-0 basis-full snap-start flex-col rounded-xl border border-slate-200 bg-white p-3', cardLayout)}>
+              <VideoEmbed url={video.url} title={video.title} />
+              <h3 dir="auto" className="mt-3 font-semibold text-slate-900">{video.title}</h3>
+              <p className="mt-1 text-sm text-slate-500">{video.channel}</p>
+              </article>
+            ))}
+          </div>
+          {HOME_YOUTUBE_VIDEOS.length > 1 && (
+            <div className={cn('mt-4 flex items-center justify-between gap-4', desktopCarousel ? '' : 'md:hidden')}>
+              <button
+                type="button"
+                onClick={() => { setPaused(true); goTo(active - 1) }}
+                aria-label={t('home.videos.prev')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
+              >
+                <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" />
+              </button>
+              <div className="flex items-center justify-center gap-2">
+                {stops.map((stop, i) => (
+                  <button
+                    key={stop}
+                    type="button"
+                    onClick={() => { setPaused(true); goTo(i) }}
+                    aria-label={t('home.videos.goTo', { n: i + 1 })}
+                    aria-current={active === i}
+                    className={cn('h-2 rounded-full transition-all', active === i ? 'w-7 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400')}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setPaused(true); goTo(active + 1) }}
+                aria-label={t('home.videos.next')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
+              >
+                <ChevronRight className="h-5 w-5 rtl:-scale-x-100" />
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center text-sm text-slate-600">
+          {t('home.videos.empty')}
+        </p>
+      )}
     </section>
   )
 }
 
 function Teachers({ counts }) {
-  const { t } = useI18n()
+  const { t, dir } = useI18n()
+  const [paused, setPaused] = useState(false)
+  const [videoTeacher, setVideoTeacher] = useState(null)
   const { data } = useQuery(
-    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, courses:courses!courses_teacher_id_fkey(id, status)').eq('role', 'teacher').eq('show_on_home', true)),
+    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, youtube_url, courses:courses!courses_teacher_id_fkey(id, status)').eq('role', 'teacher').eq('show_on_home', true)),
     [],
   )
   const teachers = (data || [])
@@ -536,28 +699,96 @@ function Teachers({ counts }) {
     .filter((p) => p.courseCount > 0)
     .sort((a, b) => b.learners - a.learners || b.courseCount - a.courseCount)
     .slice(0, 8)
+  const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, teachers.length)
+  const cardBasis = teachers.length === 2 ? 'sm:basis-[52%] md:basis-[52%] xl:basis-[52%]' : 'md:basis-[34%] xl:basis-[26%]'
+
+  useEffect(() => {
+    if (paused || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => {
+      if (!document.hidden) goTo(active + 1)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [active, goTo, paused, stops.length])
+
   if (!teachers.length) return null
   return (
-    <section className={SECTION}>
+    <>
+    <section
+      className={SECTION}
+      aria-roledescription="carousel"
+      aria-label={t('home.teachers.carousel')}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onTouchStart={() => setPaused(true)}
+    >
       <SectionHeading title={t('home.teachers.title')} description={t('home.teachers.description')} action={<ViewAll to="/teach">{t('home.teachers.join')}</ViewAll>} />
-      <Rail className="md:grid-cols-3 lg:grid-cols-4">
-        {teachers.map((p) => (
-          <Link
-            key={p.id}
-            to={`/courses?q=${encodeURIComponent(p.full_name)}`}
-            className={cn(RAIL_ITEM, 'group flex basis-[62%] flex-col items-center rounded-lg border border-slate-200 bg-white p-5 text-center transition hover:shadow-lift sm:basis-[40%]')}
-          >
-            <Avatar src={p.avatar_url} name={p.full_name} size="xl" className="ring-4 ring-brand-50" />
-            <h3 dir="auto" className="mt-3 font-semibold text-slate-900 group-hover:underline">{p.full_name}</h3>
+      <div
+        ref={trackRef}
+        onScroll={onScroll}
+        dir={dir}
+        className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:px-0"
+      >
+        {teachers.map((p, index) => (
+          <article key={p.id} role="group" aria-roledescription="slide" aria-label={t('home.teachers.slide', { n: index + 1, total: teachers.length })} className={cn('flex shrink-0 basis-[62%] snap-start flex-col rounded-lg border border-slate-200 bg-white p-4 text-center transition hover:shadow-lift sm:basis-[40%]', cardBasis)}>
+            {toYouTubeEmbedUrl(p.youtube_url) ? (
+              <button
+                type="button"
+                onClick={() => setVideoTeacher(p)}
+                aria-label={t('home.teachers.watchVideo', { name: p.full_name })}
+                className="group relative block aspect-[4/5] w-full overflow-hidden rounded-md bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+              >
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-100 to-brand-50">
+                    <Avatar name={p.full_name} size="xl" className="ring-4 ring-white" />
+                  </span>
+                )}
+                <span aria-hidden className="absolute inset-0 flex items-center justify-center bg-slate-900/0 text-white transition group-hover:bg-slate-900/25 group-focus-visible:bg-slate-900/25">
+                  <CirclePlay className="h-12 w-12 drop-shadow-lg" />
+                </span>
+              </button>
+            ) : (
+              <div className="aspect-[4/5] w-full overflow-hidden rounded-md bg-slate-100">
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-100 to-brand-50">
+                    <Avatar name={p.full_name} size="xl" className="ring-4 ring-white" />
+                  </span>
+                )}
+              </div>
+            )}
+            <h3 dir="auto" className="mt-2 font-semibold text-slate-900">{p.full_name}</h3>
             {p.headline && <p dir="auto" className="mt-1 line-clamp-2 text-sm text-slate-600">{p.headline}</p>}
             <p className="mt-auto flex flex-wrap justify-center gap-x-1.5 pt-3 text-xs text-slate-500">
               <span>{t('home.categories.courseCount', { count: p.courseCount })}</span>
               {p.learners > 0 && <span>· {t('course.learners', { count: p.learners })}</span>}
             </p>
-          </Link>
+          </article>
         ))}
-      </Rail>
+      </div>
+      {stops.length > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <button type="button" onClick={() => { setPaused(true); goTo(active - 1) }} aria-label={t('home.teachers.prev')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600">
+            <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" />
+          </button>
+          <div className="flex items-center justify-center gap-2">
+            {stops.map((stop, i) => (
+              <button key={stop} type="button" onClick={() => { setPaused(true); goTo(i) }} aria-label={t('home.teachers.goTo', { n: i + 1 })} aria-current={active === i} className={cn('h-2 rounded-full transition-all', active === i ? 'w-7 bg-slate-800' : 'w-2 bg-slate-300 hover:bg-slate-400')} />
+            ))}
+          </div>
+          <button type="button" onClick={() => { setPaused(true); goTo(active + 1) }} aria-label={t('home.teachers.next')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600">
+            <ChevronRight className="h-5 w-5 rtl:-scale-x-100" />
+          </button>
+        </div>
+      )}
     </section>
+    <Modal open={!!videoTeacher} onClose={() => setVideoTeacher(null)} title={t('home.teachers.videoTitle', { name: videoTeacher?.full_name || '' })} size="xl">
+      {videoTeacher && <VideoEmbed url={videoTeacher.youtube_url} title={t('home.teachers.videoTitle', { name: videoTeacher.full_name })} />}
+    </Modal>
+    </>
   )
 }
 
@@ -661,15 +892,14 @@ export default function Home() {
     <>
       <HeroCarousel items={contentError ? [] : inLang(content?.slides)} />
       <NewAndPopular courses={courses} counts={counts} />
-      <Organizations orgs={content?.partners} />
+      <YouTubeVideos />
       <ExploreCategories courses={courses} />
       <CourseGrid courses={courses} counts={counts} />
       <Teachers counts={counts} />
       <ImpactStats />
-      <WhySkillRise />
       <Reviews reviews={inLang(content?.reviews)} />
       <LatestPosts />
-      <Faq items={inLang(content?.faqs)} />
+      <Organizations orgs={content?.partners} />
       <BottomCta />
     </>
   )

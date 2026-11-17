@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { LoaderCircle, X } from 'lucide-react'
 import { cn, initials } from '../../lib/utils'
@@ -212,29 +212,57 @@ export function ErrorState({ error, onRetry }) {
 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }) {
   const { t } = useI18n()
+  const titleId = useId()
+  const descriptionId = useId()
+  const dialogRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   useEffect(() => {
     if (!open) return
-    const onKey = (e) => e.key === 'Escape' && onClose?.()
+    const previousFocus = document.activeElement
+    const previousOverflow = document.body.style.overflow
+    const dialog = dialogRef.current
+    const focusable = () => [...(dialog?.querySelectorAll('a[href], button:not([disabled]), iframe, input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') || [])]
+    dialog?.querySelector('[data-modal-close]')?.focus()
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current?.()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const items = focusable()
+      if (!items.length) {
+        e.preventDefault()
+        dialog?.focus()
+      } else if (e.shiftKey && document.activeElement === items[0]) {
+        e.preventDefault()
+        items[items.length - 1].focus()
+      } else if (!e.shiftKey && document.activeElement === items[items.length - 1]) {
+        e.preventDefault()
+        items[0].focus()
+      }
+    }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      document.body.style.overflow = previousOverflow
+      if (previousFocus instanceof HTMLElement && document.contains(previousFocus)) previousFocus.focus()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
   const widths = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" onClick={onClose} />
-      <div role="dialog" aria-modal="true" className={cn('relative flex max-h-[92vh] w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl', widths[size])}>
+      <div aria-hidden="true" className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" onClick={onClose} />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} tabIndex={-1} className={cn('relative flex max-h-[92vh] w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl', widths[size])}>
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-            {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
+            <h2 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h2>
+            {description && <p id={descriptionId} className="mt-0.5 text-sm text-slate-500">{description}</p>}
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label={t('common.close')}>
+          <button type="button" data-modal-close onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label={t('common.close')}>
             <X className="h-5 w-5" />
           </button>
         </div>

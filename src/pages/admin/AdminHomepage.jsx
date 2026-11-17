@@ -5,7 +5,7 @@ import { Building2, CircleHelp, ExternalLink, Eye, EyeOff, GraduationCap, Images
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { SLIDE_ARTS, SLIDE_THEMES } from '../../lib/constants'
-import { cn, errorMessage } from '../../lib/utils'
+import { cn, errorMessage, toYouTubeEmbedUrl } from '../../lib/utils'
 import { LANGUAGES, useI18n } from '../../lib/i18n'
 import { ImageUpload, useConfirm } from '../../components/shared'
 import { Avatar, Badge, Button, Card, Checkbox, EmptyState, Input, Modal, PageHeader, PageLoader, Select, Tabs, Textarea } from '../../components/ui'
@@ -336,7 +336,7 @@ function TeachersTab() {
   const { t } = useI18n()
   const [editing, setEditing] = useState(null)
   const { data, loading, reload } = useQuery(
-    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, show_on_home, courses:courses!courses_teacher_id_fkey(status)').eq('role', 'teacher').order('full_name')),
+    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, youtube_url, show_on_home, courses:courses!courses_teacher_id_fkey(status)').eq('role', 'teacher').order('full_name')),
     [],
   )
 
@@ -358,10 +358,13 @@ function TeachersTab() {
             const published = p.courses.filter((c) => c.status === 'published').length
             return (
               <Card key={p.id} className={cn('flex items-start gap-3 p-4', !p.show_on_home && 'bg-slate-50')}>
-                <Avatar src={p.avatar_url} name={p.full_name} size="lg" />
                 <div className="min-w-0 flex-1">
+                  <div className="mb-2 w-14 overflow-hidden rounded">
+                    {p.avatar_url ? <img src={p.avatar_url} alt="" className="aspect-[4/5] w-full object-cover" /> : <div className="aspect-[4/5] w-full bg-slate-100" />}
+                  </div>
                   <p dir="auto" className="font-semibold text-slate-900">{p.full_name || '—'}</p>
                   {p.headline && <p dir="auto" className="line-clamp-2 text-sm text-slate-600">{p.headline}</p>}
+                  {p.youtube_url && <p dir="ltr" className="mt-1 truncate text-xs text-slate-500">{p.youtube_url}</p>}
                   <p className="mt-1 text-xs text-slate-500">
                     {t('home.categories.courseCount', { count: published })}
                     {published === 0 && ` · ${t('admin.home.noPublished')}`}
@@ -386,15 +389,19 @@ function TeacherModal({ teacher, onClose, onSaved }) {
   const [last, setLast] = useState(null)
   if (teacher !== last) {
     setLast(teacher)
-    setForm({ full_name: teacher?.full_name || '', headline: teacher?.headline || '', avatar_url: teacher?.avatar_url || '' })
+    setForm({ full_name: teacher?.full_name || '', headline: teacher?.headline || '', avatar_url: teacher?.avatar_url || '', youtube_url: teacher?.youtube_url || '' })
   }
 
   const save = async (e) => {
     e.preventDefault()
+    if (form.youtube_url.trim() && !toYouTubeEmbedUrl(form.youtube_url)) {
+      toast.error(t('admin.home.invalidYoutubeUrl'))
+      return
+    }
     setBusy(true)
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: form.full_name.trim(), headline: form.headline.trim() || null, avatar_url: form.avatar_url || null })
+      .update({ full_name: form.full_name.trim(), headline: form.headline.trim() || null, avatar_url: form.avatar_url || null, youtube_url: form.youtube_url.trim() || null })
       .eq('id', teacher.id)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
@@ -413,10 +420,11 @@ function TeacherModal({ teacher, onClose, onSaved }) {
       <form id="teacher-form" onSubmit={save} className="space-y-4">
         <div className="max-w-32">
           <p className="mb-2 text-sm font-medium text-slate-700">{t('admin.home.fields.photo_url')}</p>
-          <ImageUpload value={form.avatar_url} onChange={(v) => setForm({ ...form, avatar_url: v })} folder="avatars" aspect="aspect-square" />
+          <ImageUpload value={form.avatar_url} onChange={(v) => setForm({ ...form, avatar_url: v })} folder="avatars" aspect="aspect-[4/5]" />
         </div>
         <Input label={t('admin.home.fields.name')} required dir="auto" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
         <Input label={t('admin.home.fields.headline')} dir="auto" value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} />
+        <Input label={t('admin.home.fields.youtube_url')} hint={t('admin.home.fieldHints.youtube_url')} type="url" dir="ltr" placeholder="https://www.youtube.com/watch?v=…" value={form.youtube_url} onChange={(e) => setForm({ ...form, youtube_url: e.target.value })} />
       </form>
     </Modal>
   )

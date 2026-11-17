@@ -22,6 +22,7 @@ insert into public.site_settings (key, value) values
   ('donate_bank_details', ''),
   ('facebook_url', ''),
   ('instagram_url', ''),
+  ('tiktok_url', ''),
   ('youtube_url', ''),
   ('linkedin_url', ''),
   ('x_url', ''),

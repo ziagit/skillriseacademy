@@ -139,6 +139,7 @@ export default {
     },
     home: {
       description: 'Everything shown on the public home page: hero slides, partners, reviews, FAQs and featured teachers.',
+      invalidYoutubeUrl: 'Enter a valid YouTube video URL.',
       view: 'View home page',
       tabs: { slides: 'Hero slides', partners: 'Partners', reviews: 'Reviews', faqs: 'FAQ', teachers: 'Teachers' },
       hints: {
@@ -182,6 +183,7 @@ export default {
         quote: 'Review',
         rating: 'Rating',
         photo_url: 'Photo',
+        youtube_url: 'YouTube video URL',
         question: 'Question',
         answer: 'Answer',
         headline: 'Headline',
@@ -189,6 +191,7 @@ export default {
       fieldHints: {
         title: 'Use {name} to greet a signed-in learner by first name.',
         image_url: 'Optional. Replaces the artwork.',
+        youtube_url: 'Optional. Add a public or unlisted YouTube video to open from the teacher’s photo.',
       },
       options: {
         lang: { all: 'All languages' },
@@ -218,6 +221,7 @@ export default {
         donate_bank_details: 'Bank transfer details',
         facebook_url: 'Facebook',
         instagram_url: 'Instagram',
+        tiktok_url: 'TikTok',
         youtube_url: 'YouTube',
         linkedin_url: 'LinkedIn',
         x_url: 'X (Twitter)',

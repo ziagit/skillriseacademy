@@ -95,6 +95,19 @@ export function toEmbedUrl(url) {
   return null
 }
 
+export function toYouTubeEmbedUrl(url) {
+  const embedUrl = toEmbedUrl(url)
+  if (!embedUrl) return null
+  try {
+    const host = new URL(url.trim()).hostname.toLowerCase().replace(/^(www|m)\./, '')
+    return host === 'youtu.be' || host === 'youtube-nocookie.com' || host === 'youtube.com' || host.endsWith('.youtube.com')
+      ? embedUrl
+      : null
+  } catch {
+    return null
+  }
+}
+
 export function errorMessage(error) {
   if (!error) return t('errors.generic')
   return error.message || error.error_description || String(error)

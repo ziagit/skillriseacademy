@@ -26,7 +26,7 @@ Security lives in the database, not only the UI. Row Level Security protects eve
 
 1. Create a project at [supabase.com](https://supabase.com). A region close to your learners is best, e.g. `ap-south-1` (Mumbai).
 2. Apply the migrations in `supabase/migrations/` **in order**, using either:
-   - **SQL Editor**: paste and run `20261101000000_init_schema.sql`, then `20261101000100_seed_data.sql`, or
+   - **SQL Editor**: paste and run every migration file in order, including `20261117000100_teacher_youtube.sql`, or
    - **Supabase CLI**: `supabase link --project-ref <ref>` then `supabase db push`.
 3. **Authentication → URL Configuration**:
    - Site URL: `https://skillriseacademy.org`

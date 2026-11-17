@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, Heart, LogOut, Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
+import { BadgeCheck, ChevronDown, Heart, LogIn, LogOut, Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
 import { homePathFor, useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import { isSupabaseConfigured } from '../lib/supabase'
@@ -76,6 +76,38 @@ function SearchBar({ className, autoFocus }) {
         <Search className="h-4 w-4" />
       </button>
     </form>
+  )
+}
+
+const SOCIAL_LABELS = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  linkedin: 'LinkedIn',
+  x: 'X',
+  whatsapp: 'WhatsApp',
+}
+
+function SocialLinks({ settings, className, itemClassName = 'h-9 w-9', iconClassName = 'h-5 w-5' }) {
+  const socials = SOCIALS.filter((s) => settings[`${s}_url`] || s === 'tiktok' || s === 'x')
+  return (
+    <nav aria-label="Social media links" className={className}>
+      {socials.map((s) => {
+        const label = SOCIAL_LABELS[s] || s
+        const url = settings[`${s}_url`]
+        const icon = <SocialIcon name={s} className={iconClassName} />
+        return url ? (
+          <a key={s} href={url} target="_blank" rel="noopener noreferrer" className={cn('inline-flex items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600', itemClassName)} aria-label={label} title={label}>
+            {icon}
+          </a>
+        ) : (
+          <span key={s} role="img" aria-label={label} title={label} className={cn('inline-flex items-center justify-center rounded-full text-slate-400', itemClassName)}>
+            {icon}
+          </span>
+        )
+      })}
+    </nav>
   )
 }
 
@@ -196,6 +228,7 @@ function Navbar() {
 }
 
 function MobileMenu({ user, profile, signOut }) {
+  const { settings } = useSettings()
   const { t } = useI18n()
   const categories = useCategories()
   return (
@@ -239,6 +272,10 @@ function MobileMenu({ user, profile, signOut }) {
             </>
           )}
         </div>
+        <div className="flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 pt-4">
+          <Logo className="[&_img]:h-5" />
+          <SocialLinks settings={settings} className="flex items-center gap-1" />
+        </div>
       </div>
     </div>
   )
@@ -247,68 +284,70 @@ function MobileMenu({ user, profile, signOut }) {
 function Footer() {
   const { settings } = useSettings()
   const { t, locale } = useI18n()
-  const categories = useCategories()
-  const socials = SOCIALS.filter((s) => settings[`${s}_url`])
   return (
     <footer className="border-t border-slate-200 bg-slate-50 text-slate-700 print:hidden">
-      <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-5">
-        <FooterCol title={t('footer.categories')} links={categories.slice(0, 6).map((c) => [c.name, `/courses?category=${c.slug}`])} />
-        <FooterCol title={t('footer.learn')} links={[[t('footer.allCourses'), '/courses'], [t('footer.verify'), '/verify'], [t('footer.studentLogin'), '/login'], [t('nav.joinFree'), '/signup']]} />
-        <FooterCol title={t('footer.community')} links={[[t('footer.becomeTeacher'), '/teach'], [t('nav.blog'), '/blog'], [t('nav.donate'), '/donate']]} />
+      <div className="container-page grid grid-cols-3 gap-x-3 gap-y-5 py-8 sm:grid-cols-2 sm:gap-8 sm:py-14 lg:grid-cols-6">
+        <FooterCol title={t('footer.learn')} links={[[t('footer.allCourses'), '/courses'], [t('nav.joinFree'), '/signup']]} />
         <FooterCol title={t('footer.organization')} links={[[t('footer.aboutUs'), '/about'], [t('nav.contact'), '/contact']]} />
-        <div>
-          <h4 className="text-base font-bold text-slate-900">{t('footer.getInTouch')}</h4>
-          <ul className="mt-4 space-y-3 text-sm">
+        <div className="min-w-0">
+          <h4 className="text-sm font-bold text-slate-900 sm:text-base">{t('footer.getInTouch')}</h4>
+          <ul className="mt-2 space-y-2 text-xs sm:mt-4 sm:space-y-3 sm:text-sm">
             {settings.contact_email && (
-              <li className="flex items-center gap-2.5">
+              <li className="flex items-center gap-1.5 sm:gap-2.5">
                 <Mail className="h-4 w-4 shrink-0 text-slate-500" />
                 <a href={`mailto:${settings.contact_email}`} dir="ltr" className="break-all hover:text-brand-600 hover:underline">{settings.contact_email}</a>
               </li>
             )}
             {settings.contact_phone && (
-              <li className="flex items-center gap-2.5">
+              <li className="flex items-center gap-1.5 sm:gap-2.5">
                 <Phone className="h-4 w-4 shrink-0 text-slate-500" /> <span dir="ltr">{settings.contact_phone}</span>
               </li>
             )}
             {settings.address && (
-              <li className="flex items-start gap-2.5">
+              <li className="flex items-start gap-1.5 sm:gap-2.5">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" /> {settings.address}
               </li>
             )}
           </ul>
-          <Button to="/donate" size="sm" className="mt-5">
-            <Heart className="h-4 w-4" /> {t('footer.support')}
-          </Button>
         </div>
+        <Link to="/login" className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 text-center transition hover:border-brand-300 hover:shadow-lift sm:min-h-16 sm:flex-row sm:justify-start sm:gap-3 sm:px-3 sm:py-4 sm:text-start">
+          <LogIn className="h-5 w-5 shrink-0 text-brand-600" />
+          <span className="text-xs font-semibold text-slate-900 sm:text-sm">{t('footer.studentLogin')}</span>
+        </Link>
+        <Link to="/verify" className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 text-center transition hover:border-brand-300 hover:shadow-lift sm:min-h-16 sm:flex-row sm:justify-start sm:gap-3 sm:px-3 sm:py-4 sm:text-start">
+          <BadgeCheck className="h-5 w-5 shrink-0 text-brand-600" />
+          <span className="text-xs font-semibold text-slate-900 sm:text-sm">{t('footer.verify')}</span>
+        </Link>
+        <Link to="/donate" className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 text-center transition hover:border-rose-300 hover:shadow-lift sm:min-h-16 sm:flex-row sm:justify-start sm:gap-3 sm:px-3 sm:py-4 sm:text-start">
+          <Heart className="h-5 w-5 shrink-0 text-rose-600" />
+          <span className="text-xs font-semibold text-slate-900 sm:text-sm">{t('nav.donate')}</span>
+        </Link>
       </div>
       <div className="border-t border-slate-200">
-        <div className="container-page flex flex-col gap-5 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-            <Logo className="[&_img]:h-8" />
-            <p className="max-w-md text-xs leading-relaxed text-slate-500">
-              {t('footer.copyright', { year: new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(new Date()) })}
-            </p>
+        <div className="container-page flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-center gap-2 sm:justify-start">
+            <Logo className="shrink-0 [&_img]:h-5 sm:[&_img]:h-8" />
+            <SocialLinks
+              settings={settings}
+              className="flex shrink-0 items-center gap-0 sm:gap-1"
+              itemClassName="h-8 w-8 sm:h-9 sm:w-9"
+              iconClassName="h-4 w-4 sm:h-5 sm:w-5"
+            />
           </div>
-          {socials.length > 0 && (
-            <div className="flex gap-1">
-              {socials.map((s) => (
-                <a key={s} href={settings[`${s}_url`]} target="_blank" rel="noreferrer" className="rounded-full p-2 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900" aria-label={s}>
-                  <SocialIcon name={s} className="h-5 w-5" />
-                </a>
-              ))}
-            </div>
-          )}
+          <p className="max-w-md text-xs leading-relaxed text-slate-500">
+            {t('footer.copyright', { year: new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(new Date()) })}
+          </p>
         </div>
       </div>
     </footer>
   )
 }
 
-function FooterCol({ title, links }) {
+function FooterCol({ title, links, className }) {
   return (
-    <div>
-      <h4 className="text-base font-bold text-slate-900">{title}</h4>
-      <ul className="mt-4 space-y-2.5 text-sm">
+    <div className={className}>
+      <h4 className="text-sm font-bold text-slate-900 sm:text-base">{title}</h4>
+      <ul className="mt-2 space-y-1.5 text-xs sm:mt-4 sm:space-y-2.5 sm:text-sm">
         {links.map(([label, to]) => (
           <li key={to}>
             <Link to={to} dir="auto" className="transition hover:text-brand-600 hover:underline">{label}</Link>

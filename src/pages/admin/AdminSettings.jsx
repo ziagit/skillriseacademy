@@ -31,6 +31,7 @@ const GROUPS = [
     fields: [
       ['facebook_url', 'url'],
       ['instagram_url', 'url'],
+      ['tiktok_url', 'url'],
       ['youtube_url', 'url'],
       ['linkedin_url', 'url'],
       ['x_url', 'url'],
