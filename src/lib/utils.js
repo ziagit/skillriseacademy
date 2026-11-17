@@ -108,6 +108,12 @@ export function toYouTubeEmbedUrl(url) {
   }
 }
 
+export function toYouTubeThumbnailUrl(url) {
+  const embedUrl = toYouTubeEmbedUrl(url)
+  const videoId = embedUrl?.match(/\/embed\/([^/?]+)/)?.[1]
+  return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null
+}
+
 export function errorMessage(error) {
   if (!error) return t('errors.generic')
   return error.message || error.error_description || String(error)

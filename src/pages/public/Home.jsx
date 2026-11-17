@@ -8,35 +8,13 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { SLIDE_THEMES } from '../../lib/constants'
-import { cn, formatDate, formatNumber, toYouTubeEmbedUrl } from '../../lib/utils'
+import { cn, formatDate, formatNumber, toYouTubeEmbedUrl, toYouTubeThumbnailUrl } from '../../lib/utils'
 import { useI18n } from '../../lib/i18n'
 import { COURSE_CARD_SELECT, CategoryIcon, CourseCard, CourseListItem, VideoEmbed, categoryColor, useCategories } from '../../components/shared'
 import { Avatar, Button, Modal } from '../../components/ui'
 
 const H2 = 'text-xl font-semibold sm:text-2xl lg:text-[28px]'
 const SECTION = 'container-page pt-10 md:pt-14'
-const HOME_YOUTUBE_VIDEOS = [
-  {
-    title: 'But what is a neural network? | Deep learning chapter 1',
-    channel: '3Blue1Brown',
-    url: 'https://www.youtube.com/watch?v=aircAruvnKk',
-  },
-  {
-    title: 'Learn Python - Full Course for Beginners [Tutorial]',
-    channel: 'freeCodeCamp.org',
-    url: 'https://www.youtube.com/watch?v=rfscVS0vtbw',
-  },
-  {
-    title: 'HTML Full Course - Build a Website Tutorial',
-    channel: 'freeCodeCamp.org',
-    url: 'https://www.youtube.com/watch?v=pQN-pnXPaVg',
-  },
-  {
-    title: 'Learn JavaScript - Full Course for Beginners',
-    channel: 'freeCodeCamp.org',
-    url: 'https://www.youtube.com/watch?v=PkZNo7MFNFg',
-  },
-]
 
 function SectionHeading({ title, description, action }) {
   return (
@@ -598,9 +576,15 @@ function Organizations({ orgs }) {
 
 function YouTubeVideos() {
   const { t, dir } = useI18n()
-  const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, HOME_YOUTUBE_VIDEOS.length)
+  const { data: videos, loading, error } = useQuery(
+    async () => unwrap(await supabase.from('home_videos').select('id, title, channel, youtube_url, thumbnail_url').eq('published', true).order('sort_order').order('created_at')),
+    [],
+  )
+  const items = videos || []
+  const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, items.length)
   const [paused, setPaused] = useState(false)
-  const desktopCarousel = HOME_YOUTUBE_VIDEOS.length > 3
+  const [selectedVideo, setSelectedVideo] = useState(null)
+  const desktopCarousel = items.length > 3
 
   useEffect(() => {
     if (paused || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -611,6 +595,17 @@ function YouTubeVideos() {
   }, [active, goTo, paused, stops.length])
 
   const cardLayout = desktopCarousel ? 'md:basis-[calc(33.333%-0.834rem)]' : 'md:basis-auto'
+  if (loading) {
+    return (
+      <section className={SECTION} aria-busy="true">
+        <SectionHeading title={t('home.videos.title')} description={t('home.videos.description')} />
+        <div className="grid gap-5 md:grid-cols-3">
+          {[0, 1, 2].map((item) => <div key={item} className="aspect-video animate-pulse rounded-xl bg-slate-100" />)}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section
       className={SECTION}
@@ -622,7 +617,9 @@ function YouTubeVideos() {
       onTouchStart={() => setPaused(true)}
     >
       <SectionHeading title={t('home.videos.title')} description={t('home.videos.description')} />
-      {HOME_YOUTUBE_VIDEOS.length ? (
+      {error ? (
+        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">{t('home.videos.error')}</p>
+      ) : items.length ? (
         <>
           <div
             ref={trackRef}
@@ -633,15 +630,28 @@ function YouTubeVideos() {
               desktopCarousel ? 'md:flex' : 'md:grid md:grid-cols-3 md:overflow-visible',
             )}
           >
-            {HOME_YOUTUBE_VIDEOS.map((video) => (
-              <article key={video.url} className={cn('flex shrink-0 basis-full snap-start flex-col rounded-xl border border-slate-200 bg-white p-3', cardLayout)}>
-              <VideoEmbed url={video.url} title={video.title} />
-              <h3 dir="auto" className="mt-3 font-semibold text-slate-900">{video.title}</h3>
-              <p className="mt-1 text-sm text-slate-500">{video.channel}</p>
-              </article>
-            ))}
+            {items.map((video) => {
+              const thumbnail = video.thumbnail_url || toYouTubeThumbnailUrl(video.youtube_url)
+              return (
+                <article key={video.id} className={cn('flex shrink-0 basis-full snap-start flex-col rounded-xl border border-slate-200 bg-white p-3', cardLayout)}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVideo(video)}
+                    aria-label={t('home.videos.watch', { title: video.title })}
+                    className="group relative block aspect-video w-full overflow-hidden rounded-lg bg-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+                  >
+                    {thumbnail && <img src={thumbnail} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />}
+                    <span className="absolute inset-0 flex items-center justify-center bg-slate-950/20 text-white transition group-hover:bg-slate-950/35">
+                      <CirclePlay className="h-14 w-14 drop-shadow-lg" />
+                    </span>
+                  </button>
+                  <h3 dir="auto" className="mt-3 font-semibold text-slate-900">{video.title}</h3>
+                  {video.channel && <p dir="auto" className="mt-1 text-sm text-slate-500">{video.channel}</p>}
+                </article>
+              )
+            })}
           </div>
-          {HOME_YOUTUBE_VIDEOS.length > 1 && (
+          {items.length > 1 && (
             <div className={cn('mt-4 flex items-center justify-between gap-4', desktopCarousel ? '' : 'md:hidden')}>
               <button
                 type="button"
@@ -679,6 +689,9 @@ function YouTubeVideos() {
           {t('home.videos.empty')}
         </p>
       )}
+      <Modal open={!!selectedVideo} onClose={() => setSelectedVideo(null)} title={selectedVideo?.title || ''} size="xl">
+        {selectedVideo && <VideoEmbed url={selectedVideo.youtube_url} title={selectedVideo.title} />}
+      </Modal>
     </section>
   )
 }

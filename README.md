@@ -11,7 +11,7 @@ Built with **React 19 + Vite + Tailwind CSS 4**, backed by **Supabase** (Postgre
 | **Public site** | Home, course catalog (search, filter by category/level), course pages with curriculum and free preview lessons, About, Blog, Donate, Contact, Become a teacher, certificate verification |
 | **Student portal** | Dashboard, my courses with progress, course player (YouTube/Vimeo lessons, notes, progress tracking), quizzes, assignments, course announcements, certificates |
 | **Teacher portal** | Overview stats, course builder (details, sections, lessons, quizzes, assignments, students, announcements), submission grading, blog writing |
-| **Admin dashboard** | Platform stats and charts, users (roles, suspend), teacher applications, course review/publishing/featuring, categories, blog moderation, site-wide announcements, certificates (revoke), contact messages, site settings (contact info, donation link/bank details, social links) |
+| **Admin dashboard** | Platform stats and charts, users (roles, suspend), teacher applications, course review/publishing/featuring, home page content (including YouTube videos and thumbnails), categories, blog moderation, site-wide announcements, certificates (revoke), contact messages, site settings (contact info, donation link/bank details, social links) |
 
 ### How the roles work
 

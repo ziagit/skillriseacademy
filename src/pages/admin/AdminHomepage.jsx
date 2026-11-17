@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Building2, CircleHelp, ExternalLink, Eye, EyeOff, GraduationCap, Images, MessageSquareQuote, Pencil, Plus, Star, Trash2 } from 'lucide-react'
+import { Building2, CircleHelp, CirclePlay, ExternalLink, Eye, EyeOff, GraduationCap, Images, MessageSquareQuote, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
 import { SLIDE_ARTS, SLIDE_THEMES } from '../../lib/constants'
-import { cn, errorMessage, toYouTubeEmbedUrl } from '../../lib/utils'
+import { cn, errorMessage, toYouTubeEmbedUrl, toYouTubeThumbnailUrl } from '../../lib/utils'
 import { LANGUAGES, useI18n } from '../../lib/i18n'
 import { ImageUpload, useConfirm } from '../../components/shared'
 import { Avatar, Badge, Button, Card, Checkbox, EmptyState, Input, Modal, PageHeader, PageLoader, Select, Tabs, Textarea } from '../../components/ui'
@@ -73,6 +73,18 @@ const CONTENT = {
     ],
     Row: FaqRow,
   },
+  videos: {
+    table: 'home_videos',
+    icon: CirclePlay,
+    fields: [
+      { key: 'title', required: true, span: 3 },
+      { key: 'youtube_url', type: 'url', required: true, hint: true, span: 3 },
+      { key: 'channel', span: 2 },
+      { key: 'thumbnail_url', type: 'image', hint: true, span: 3 },
+      ORDER_FIELD,
+    ],
+    Row: VideoRow,
+  },
 }
 const TABS = [...Object.keys(CONTENT), 'teachers']
 
@@ -102,7 +114,7 @@ function ContentTab({ tab, table, icon: Icon, defaults, fields, Row }) {
   const { t } = useI18n()
   const confirm = useConfirm()
   const [modal, setModal] = useState(null)
-  const { data, loading, reload } = useQuery(
+  const { data, loading, error, reload } = useQuery(
     async () => unwrap(await supabase.from(table).select('*').order('sort_order').order('created_at')),
     [table],
   )
@@ -121,7 +133,9 @@ function ContentTab({ tab, table, icon: Icon, defaults, fields, Row }) {
   }
 
   if (loading) return <PageLoader />
-  const nextOrder = Math.max(0, ...data.map((d) => d.sort_order)) + 1
+  if (error) return <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage(error)}</p>
+  const items = data || []
+  const nextOrder = Math.max(0, ...items.map((d) => d.sort_order)) + 1
   const add = () => setModal({ ...defaults, sort_order: nextOrder })
   return (
     <>
@@ -129,11 +143,11 @@ function ContentTab({ tab, table, icon: Icon, defaults, fields, Row }) {
         <p className="text-sm text-slate-500">{t(`admin.home.hints.${tab}`)}</p>
         <Button onClick={add} className="shrink-0"><Plus className="h-4 w-4" /> {t(`admin.home.new.${tab}`)}</Button>
       </div>
-      {data.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState icon={Icon} title={t('admin.home.empty')} action={<Button onClick={add}>{t(`admin.home.new.${tab}`)}</Button>} />
       ) : (
         <div className="space-y-3">
-          {data.map((item) => (
+          {items.map((item) => (
             <Card key={item.id} className={cn('flex items-start gap-4 p-4', !item.published && 'bg-slate-50')}>
               <div className={cn('min-w-0 flex-1', !item.published && 'opacity-60')}>
                 <Row item={item} />
@@ -180,6 +194,10 @@ function ContentModal({ tab, table, fields, state, onClose, onSaved }) {
 
   const save = async (e) => {
     e.preventDefault()
+    if (tab === 'videos' && !toYouTubeEmbedUrl(form.youtube_url)) {
+      toast.error(t('admin.home.invalidYoutubeUrl'))
+      return
+    }
     setBusy(true)
     const payload = Object.fromEntries(
       fields.map(({ key, type }) => {
@@ -328,6 +346,24 @@ function FaqRow({ item }) {
     <div>
       <p dir="auto" className="font-semibold text-slate-900">{item.question}</p>
       <p dir="auto" className="mt-0.5 line-clamp-2 text-sm text-slate-600">{item.answer}</p>
+    </div>
+  )
+}
+
+function VideoRow({ item }) {
+  const thumbnail = item.thumbnail_url || toYouTubeThumbnailUrl(item.youtube_url)
+  return (
+    <div className="flex items-start gap-3">
+      {thumbnail ? (
+        <img src={thumbnail} alt="" className="hidden aspect-video w-28 shrink-0 rounded-md object-cover sm:block" />
+      ) : (
+        <span className="hidden aspect-video w-28 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 sm:flex"><CirclePlay className="h-7 w-7" /></span>
+      )}
+      <div className="min-w-0">
+        <p dir="auto" className="font-semibold text-slate-900">{item.title}</p>
+        {item.channel && <p dir="auto" className="mt-0.5 text-sm text-slate-500">{item.channel}</p>}
+        <p dir="ltr" className="mt-1 truncate text-start text-xs text-slate-500">{item.youtube_url}</p>
+      </div>
     </div>
   )
 }

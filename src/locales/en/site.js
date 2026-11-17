@@ -40,6 +40,8 @@ export default {
       title: 'YouTube videos',
       description: 'Watch educational videos from SkillRise Academy.',
       empty: 'Videos will be added soon.',
+      error: 'Videos could not be loaded. Please try again later.',
+      watch: 'Play video: {title}',
       carousel: 'YouTube videos',
       prev: 'Previous video',
       next: 'Next video',
