@@ -140,6 +140,7 @@ export default {
     blog: 'Blog',
     messages: 'Messages',
     homepage: 'Home page',
+    youtubeVideos: 'YouTube videos',
     siteSettings: 'Site settings',
     browseCourses: 'Browse courses',
     profileSettings: 'Profile settings',

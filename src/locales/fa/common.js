@@ -140,6 +140,7 @@ export default {
     blog: 'وبلاگ',
     messages: 'پیام‌ها',
     homepage: 'صفحهٔ اصلی',
+    youtubeVideos: 'ویدیوهای یوتیوب',
     siteSettings: 'تنظیمات سایت',
     browseCourses: 'مرور دوره‌ها',
     profileSettings: 'تنظیمات پروفایل',

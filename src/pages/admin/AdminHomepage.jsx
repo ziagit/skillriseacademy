@@ -73,18 +73,18 @@ const CONTENT = {
     ],
     Row: FaqRow,
   },
-  videos: {
-    table: 'home_videos',
-    icon: CirclePlay,
-    fields: [
-      { key: 'title', required: true, span: 3 },
-      { key: 'youtube_url', type: 'url', required: true, hint: true, span: 3 },
-      { key: 'channel', span: 2 },
-      { key: 'thumbnail_url', type: 'image', hint: true, span: 3 },
-      ORDER_FIELD,
-    ],
-    Row: VideoRow,
-  },
+}
+const VIDEO_CONTENT = {
+  table: 'home_videos',
+  icon: CirclePlay,
+  fields: [
+    { key: 'title', required: true, span: 3 },
+    { key: 'youtube_url', type: 'url', required: true, hint: true, span: 3 },
+    { key: 'channel', span: 2 },
+    { key: 'thumbnail_url', type: 'image', hint: true, span: 3 },
+    ORDER_FIELD,
+  ],
+  Row: VideoRow,
 }
 const TABS = [...Object.keys(CONTENT), 'teachers']
 
@@ -110,7 +110,21 @@ export default function AdminHomepage() {
   )
 }
 
-function ContentTab({ tab, table, icon: Icon, defaults, fields, Row }) {
+export function AdminVideos() {
+  const { t } = useI18n()
+  return (
+    <>
+      <PageHeader
+        title={t('portalNav.youtubeVideos')}
+        description={t('admin.home.hints.videos')}
+        actions={<Button href="/" target="_blank" rel="noreferrer" variant="outline"><ExternalLink className="h-4 w-4" /> {t('admin.home.view')}</Button>}
+      />
+      <ContentTab key="videos" tab="videos" showHint={false} {...VIDEO_CONTENT} />
+    </>
+  )
+}
+
+function ContentTab({ tab, table, icon: Icon, defaults, fields, Row, showHint = true }) {
   const { t } = useI18n()
   const confirm = useConfirm()
   const [modal, setModal] = useState(null)
@@ -133,14 +147,17 @@ function ContentTab({ tab, table, icon: Icon, defaults, fields, Row }) {
   }
 
   if (loading) return <PageLoader />
-  if (error) return <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage(error)}</p>
+  if (error) {
+    const missingVideosTable = tab === 'videos' && (error.code === 'PGRST205' || error.message?.includes('home_videos'))
+    return <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{missingVideosTable ? t('admin.home.videosMigrationRequired') : errorMessage(error)}</p>
+  }
   const items = data || []
   const nextOrder = Math.max(0, ...items.map((d) => d.sort_order)) + 1
   const add = () => setModal({ ...defaults, sort_order: nextOrder })
   return (
     <>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-500">{t(`admin.home.hints.${tab}`)}</p>
+        {showHint && <p className="text-sm text-slate-500">{t(`admin.home.hints.${tab}`)}</p>}
         <Button onClick={add} className="shrink-0"><Plus className="h-4 w-4" /> {t(`admin.home.new.${tab}`)}</Button>
       </div>
       {items.length === 0 ? (
