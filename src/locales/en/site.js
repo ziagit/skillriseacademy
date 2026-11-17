@@ -2,21 +2,7 @@
 export default {
   home: {
     banner: {
-      title: 'Learn without limits, completely free',
-      text: 'Practical courses in AI, design, marketing, English and more, taught by real practitioners. Every course and certificate is free.',
       cta: 'Join for free',
-      welcome: 'Welcome back, {name}',
-      welcomeText: 'Pick up where you left off, or find something new to learn today.',
-      continue: 'Go to My Learning',
-      teachTitle: 'Share your expertise with the world',
-      teachText: 'Volunteer as a teacher and help learners build skills that change their lives.',
-      teachCta: 'Become a teacher',
-      certEyebrow: 'Verified certificates',
-      certTitle: 'Earn certificates anyone can verify',
-      certText: 'Finish a course to get a free certificate with a unique ID that employers can check online.',
-      donateEyebrow: 'Support the mission',
-      donateTitle: 'Help keep learning free for everyone',
-      donateText: 'SkillRise is a non-profit. Your donation funds new courses and reaches more learners.',
       carousel: 'Highlights',
       prev: 'Previous slide',
       next: 'Next slide',
@@ -36,8 +22,6 @@ export default {
       text: 'Join now to start learning for free, or support our mission so more people can learn too.',
     },
     hero: {
-      badge: 'Non-profit · 100% free learning',
-      explore: 'Explore courses',
       createAccount: 'Create free account',
     },
     mock: {
@@ -47,8 +31,6 @@ export default {
     },
     partners: {
       title: 'Organizations we cooperate with',
-      // Sample entries shown until an admin lists real partners in Site settings.
-      samples: ['Community Learning Network', 'Youth Skills Foundation', 'Women in Tech Initiative', 'Open Education Alliance', 'Digital Freelancers Hub', 'Local Media Collective'],
     },
     teachers: {
       title: 'Learn from our teachers',
@@ -58,13 +40,6 @@ export default {
     reviews: {
       title: 'What our learners say',
       description: 'Real stories from people building new skills with SkillRise.',
-      // Sample entries shown until an admin adds real reviews in Site settings.
-      samples: [
-        { name: 'Mariam A.', role: 'Graphic Design learner', quote: 'I had never opened a design tool before. Six weeks later I delivered my first paid logo project to a local shop.' },
-        { name: 'Ahmad R.', role: 'Freelancing learner', quote: 'The lessons are short and practical, so I could study on my phone after work. Now I find clients online every month.' },
-        { name: 'Sana K.', role: 'English Language learner', quote: 'Being able to learn for free, at my own pace, made all the difference. My confidence in interviews has grown a lot.' },
-        { name: 'Farid N.', role: 'Artificial Intelligence learner', quote: 'The teacher explained AI tools in a way I could use right away. I automate parts of my job I used to do by hand.' },
-      ],
     },
     stats: {
       title: 'Join a growing community of learners and teachers',
@@ -118,28 +93,6 @@ export default {
       notFound: "Can't find what you're looking for?",
       contact: 'Contact our team',
       period: '.',
-      items: [
-        {
-          q: 'Are the courses really free?',
-          a: 'Yes. SkillRise Academy is a non-profit organization. Every course, quiz and certificate is free. We are funded by donations from people who believe in our mission.',
-        },
-        {
-          q: 'Do I get a certificate?',
-          a: 'When you complete every lesson and pass all quizzes in a course, you can download a certificate with a unique verification code that employers can check on our website.',
-        },
-        {
-          q: 'Who teaches the courses?',
-          a: 'Our teachers are practitioners and volunteers who work in the fields they teach. Every teacher is reviewed and approved by our team before they can publish courses.',
-        },
-        {
-          q: 'Do I need any special equipment?',
-          a: 'Most courses only need a smartphone or computer and an internet connection. Course pages list any extra requirements, such as software.',
-        },
-        {
-          q: 'How can I support SkillRise?',
-          a: 'You can donate, volunteer as a teacher, or simply share our courses with someone who could benefit from them.',
-        },
-      ],
     },
     teach: {
       cta: 'Become a teacher',

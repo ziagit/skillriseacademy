@@ -4,10 +4,10 @@ import {
   ArrowRight, Award, BadgeCheck, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, Clock, GraduationCap, Heart, Quote,
   Sparkles, Star, Target, Users,
 } from 'lucide-react'
-import { homePathFor, useAuth } from '../../context/AuthContext'
-import { useSettings } from '../../context/SettingsContext'
+import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { unwrap, useQuery } from '../../lib/useQuery'
+import { SLIDE_THEMES } from '../../lib/constants'
 import { cn, formatDate, formatNumber } from '../../lib/utils'
 import { useI18n } from '../../lib/i18n'
 import { COURSE_CARD_SELECT, CategoryIcon, CourseCard, CourseListItem, categoryColor, useCategories } from '../../components/shared'
@@ -63,53 +63,54 @@ function Slide({ className, eyebrow, title, text, actions, art, heading: Heading
   )
 }
 
+function SlideButton({ url, label, className, variant }) {
+  if (!label) return null
+  // Site paths stay in the app; anything else is an ordinary link.
+  const target = url?.startsWith('/') ? { to: url } : { href: url || '#' }
+  return <Button {...target} variant={variant} className={className}>{label}</Button>
+}
+
+function slideArt(slide) {
+  if (slide.image_url) {
+    return (
+      <div aria-hidden className={ART}>
+        <img src={slide.image_url} alt="" className="max-h-full max-w-[85%] object-contain sm:max-h-[80%]" />
+      </div>
+    )
+  }
+  switch (slide.art) {
+    case 'certificate': return <CertificateArt />
+    case 'teacher': return <TeacherArt />
+    case 'badge': return <IconArt icon={BadgeCheck} tone="text-emerald-600" />
+    case 'heart': return <IconArt icon={Heart} tone="text-rose-500" />
+    case 'book': return <IconArt icon={BookOpen} tone="text-brand-600" />
+    default: return null
+  }
+}
+
 // Coursera-style hero carousel: swipe or scroll-snap on touch, arrows and dots on desktop,
-// and a slow auto-advance that stops once the visitor interacts.
-function HeroCarousel() {
+// and a slow auto-advance that stops once the visitor interacts. Slides come from Admin → Home page.
+function HeroCarousel({ items }) {
   const { t, dir } = useI18n()
   const { user, profile } = useAuth()
   const trackRef = useRef(null)
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
-  const firstName = profile?.full_name?.split(' ')[0]
+  const [stops, setStops] = useState([0])
+  const firstName = profile?.full_name?.split(' ')[0] || t('portalNav.there')
 
-  const slides = [
-    user ? (
+  const visible = (items || []).filter((s) => s.audience === 'all' || (s.audience === 'members') === !!user)
+  const slides = visible.map((s, i) => {
+    const theme = SLIDE_THEMES[s.theme] || SLIDE_THEMES.blue
+    return (
       <Slide
-        key="learn" heading="h1" className="bg-brand-600"
-        title={t('home.banner.welcome', { name: firstName || t('portalNav.there') })}
-        text={t('home.banner.welcomeText')}
-        actions={<Button to={homePathFor(profile?.role)} variant="white">{t('home.banner.continue')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" /></Button>}
-        art={<><Circles a="bg-brand-500/60" b="bg-brand-800/60" /><CertificateArt /></>}
+        key={s.id} heading={i === 0 ? 'h1' : 'h2'} className={theme.bg}
+        eyebrow={s.eyebrow} title={s.title.replaceAll('{name}', firstName)} text={s.body}
+        actions={<><SlideButton url={s.cta_url} label={s.cta_label} variant="white" /><SlideButton url={s.cta2_url} label={s.cta2_label} className={OUTLINE_WHITE} /></>}
+        art={<><Circles a={theme.a} b={theme.b} />{slideArt(s)}</>}
       />
-    ) : (
-      <Slide
-        key="learn" heading="h1" className="bg-brand-600"
-        eyebrow={t('home.hero.badge')} title={t('home.banner.title')} text={t('home.banner.text')}
-        actions={<><Button to="/signup" variant="white">{t('home.banner.cta')}</Button><Button to="/courses" className={OUTLINE_WHITE}>{t('home.hero.explore')}</Button></>}
-        art={<><Circles a="bg-brand-500/60" b="bg-brand-800/60" /><CertificateArt /></>}
-      />
-    ),
-    <Slide
-      key="teach" className="bg-slate-950"
-      eyebrow={t('nav.forTeachers')} title={t('home.banner.teachTitle')} text={t('home.banner.teachText')}
-      actions={<Button to="/teach" className={OUTLINE_WHITE}>{t('home.banner.teachCta')} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" /></Button>}
-      art={<><Circles a="bg-amber-400/15" b="bg-white/5" /><TeacherArt /></>}
-    />,
-    <Slide
-      key="cert" className="bg-emerald-700"
-      eyebrow={t('home.banner.certEyebrow')} title={t('home.banner.certTitle')} text={t('home.banner.certText')}
-      actions={<><Button to="/courses" variant="white">{t('home.hero.explore')}</Button><Button to="/verify" className={OUTLINE_WHITE}>{t('nav.verify')}</Button></>}
-      art={<><Circles a="bg-emerald-500/50" b="bg-emerald-900/40" /><IconArt icon={BadgeCheck} tone="text-emerald-600" /></>}
-    />,
-    <Slide
-      key="donate" className="bg-violet-700"
-      eyebrow={t('home.banner.donateEyebrow')} title={t('home.banner.donateTitle')} text={t('home.banner.donateText')}
-      actions={<Button to="/donate" variant="white"><Heart className="h-4 w-4" /> {t('home.mission.donate')}</Button>}
-      art={<><Circles a="bg-violet-500/50" b="bg-violet-900/40" /><IconArt icon={Heart} tone="text-rose-500" /></>}
-    />,
-  ]
-  const [stops, setStops] = useState(() => slides.map((_, i) => i))
+    )
+  })
   const sign = dir === 'rtl' ? -1 : 1
 
   // Scroll positions the track can rest at: each slide's start, clamped to the end. On wide
@@ -131,7 +132,7 @@ function HeroCarousel() {
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
-  }, [measure])
+  }, [measure, slides.length])
 
   const goTo = useCallback((i) => {
     const n = stops.length
@@ -148,6 +149,15 @@ function HeroCarousel() {
     const id = setInterval(() => !document.hidden && goTo(active + 1), 6000)
     return () => clearInterval(id)
   }, [active, paused, goTo])
+
+  if (!items) {
+    return (
+      <div className="container-page pt-6">
+        <div className="min-h-[440px] w-[80%] animate-pulse rounded-2xl bg-slate-100 sm:min-h-[300px] lg:w-[calc(50%-8px)]" />
+      </div>
+    )
+  }
+  if (!slides.length) return null
 
   const arrow = 'absolute top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-900 shadow-lg ring-1 ring-slate-200 transition hover:bg-slate-50 md:flex'
   return (
@@ -478,20 +488,9 @@ export function BlogCard({ post, className }) {
   )
 }
 
-// Admin-editable lists live in site_settings as one entry per line, fields separated by "|".
-function parseLines(text, keys) {
-  return (text || '')
-    .split('\n')
-    .map((line) => line.split('|').map((part) => part.trim()))
-    .filter((parts) => parts[0])
-    .map((parts) => Object.fromEntries(keys.map((k, i) => [k, parts[i] || ''])))
-}
-
-function Organizations() {
+function Organizations({ orgs }) {
   const { t } = useI18n()
-  const { settings } = useSettings()
-  const saved = parseLines(settings.partners, ['name', 'url', 'logo'])
-  const orgs = saved.length ? saved : t('home.partners.samples').map((name) => ({ name }))
+  if (!orgs?.length) return null
   return (
     <section className={SECTION}>
       <h2 className="mb-4 text-lg font-semibold sm:mb-5 sm:text-xl">{t('home.partners.title')}</h2>
@@ -499,8 +498,8 @@ function Organizations() {
         {orgs.map((org) => {
           const body = (
             <>
-              {org.logo ? (
-                <img src={org.logo} alt="" className="h-7 w-7 shrink-0 rounded object-contain" />
+              {org.logo_url ? (
+                <img src={org.logo_url} alt="" className="h-7 w-7 shrink-0 rounded object-contain" />
               ) : (
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-brand-600 text-xs font-bold text-white">{org.name.charAt(0)}</span>
               )}
@@ -509,9 +508,9 @@ function Organizations() {
           )
           const pill = 'flex h-12 items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 transition'
           return (
-            <li key={org.name} className="shrink-0">
-              {org.url ? (
-                <a href={org.url} target="_blank" rel="noreferrer" className={cn(pill, 'hover:border-brand-200 hover:shadow-lift')}>{body}</a>
+            <li key={org.id} className="shrink-0">
+              {org.website_url ? (
+                <a href={org.website_url} target="_blank" rel="noreferrer" className={cn(pill, 'hover:border-brand-200 hover:shadow-lift')}>{body}</a>
               ) : (
                 <div className={pill}>{body}</div>
               )}
@@ -526,7 +525,7 @@ function Organizations() {
 function Teachers({ counts }) {
   const { t } = useI18n()
   const { data } = useQuery(
-    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, courses:courses!courses_teacher_id_fkey(id, status)').eq('role', 'teacher')),
+    async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, courses:courses!courses_teacher_id_fkey(id, status)').eq('role', 'teacher').eq('show_on_home', true)),
     [],
   )
   const teachers = (data || [])
@@ -562,26 +561,24 @@ function Teachers({ counts }) {
   )
 }
 
-function Reviews() {
+function Reviews({ reviews }) {
   const { t } = useI18n()
-  const { settings } = useSettings()
-  const saved = parseLines(settings.testimonials, ['name', 'role', 'quote', 'photo'])
-  const reviews = saved.length ? saved : t('home.reviews.samples')
+  if (!reviews?.length) return null
   return (
     <section className={SECTION}>
       <SectionHeading title={t('home.reviews.title')} description={t('home.reviews.description')} />
       <Rail className="md:grid-cols-2 lg:grid-cols-4">
-        {reviews.map((r, i) => (
-          <figure key={i} className={cn(RAIL_ITEM, 'flex basis-[85%] flex-col rounded-lg border border-slate-200 bg-white p-5 sm:basis-[60%]')}>
+        {reviews.map((r) => (
+          <figure key={r.id} className={cn(RAIL_ITEM, 'flex basis-[85%] flex-col rounded-lg border border-slate-200 bg-white p-5 sm:basis-[60%]')}>
             <div className="flex items-center gap-3">
-              <Avatar src={r.photo || undefined} name={r.name} size="lg" />
+              <Avatar src={r.photo_url} name={r.name} size="lg" />
               <figcaption className="min-w-0">
                 <p dir="auto" className="font-semibold text-slate-900">{r.name}</p>
                 {r.role && <p dir="auto" className="line-clamp-2 text-sm text-slate-500">{r.role}</p>}
               </figcaption>
             </div>
             <div className="mt-4 flex gap-0.5 text-amber-500" aria-hidden>
-              {[1, 2, 3, 4, 5].map((n) => <Star key={n} className="h-4 w-4 fill-current" />)}
+              {Array.from({ length: r.rating }, (_, n) => <Star key={n} className="h-4 w-4 fill-current" />)}
             </div>
             <blockquote dir="auto" className="relative mt-3 text-[15px] leading-relaxed text-slate-700">
               <Quote className="absolute -top-1 end-0 h-6 w-6 text-brand-100" aria-hidden />
@@ -594,19 +591,20 @@ function Reviews() {
   )
 }
 
-function Faq() {
+function Faq({ items }) {
   const { t } = useI18n()
+  if (!items?.length) return null
   return (
     <section className={SECTION}>
       <h2 className={H2}>{t('home.faq.title')}</h2>
       <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200 sm:mt-6">
-        {t('home.faq.items').map((f) => (
-          <details key={f.q} className="group py-1 [&_summary::-webkit-details-marker]:hidden">
+        {items.map((f) => (
+          <details key={f.id} className="group py-1 [&_summary::-webkit-details-marker]:hidden">
             <summary className="flex cursor-pointer items-center gap-3 py-3.5 text-base font-semibold text-slate-900 hover:text-brand-700 sm:gap-4 sm:py-4 sm:text-lg">
               <ChevronDown className="h-5 w-5 shrink-0 text-slate-700 transition group-open:rotate-180" />
-              {f.q}
+              <span dir="auto">{f.question}</span>
             </summary>
-            <p className="pb-5 ps-8 text-sm leading-relaxed text-slate-600 sm:ps-9 sm:text-base">{f.a}</p>
+            <p dir="auto" className="whitespace-pre-line pb-5 ps-8 text-sm leading-relaxed text-slate-600 sm:ps-9 sm:text-base">{f.answer}</p>
           </details>
         ))}
       </div>
@@ -648,21 +646,30 @@ export default function Home() {
     const counts = unwrap(await supabase.rpc('course_enrollment_counts'))
     return { courses: courses || [], counts: Object.fromEntries((counts || []).map((c) => [c.course_id, c.students])) }
   }, [])
+  // Admin-managed home content. Filter on published explicitly: admins can also read hidden rows.
+  const { lang } = useI18n()
+  const { data: content, error: contentError } = useQuery(async () => {
+    const tables = ['home_slides', 'partners', 'testimonials', 'faqs']
+    const results = await Promise.all(tables.map((table) => supabase.from(table).select('*').eq('published', true).order('sort_order').order('created_at')))
+    const [slides, partners, reviews, faqs] = results.map(unwrap)
+    return { slides, partners, reviews, faqs }
+  }, [])
+  const inLang = (rows) => rows?.filter((r) => !r.lang || r.lang === lang)
   const courses = data?.courses || []
   const counts = data?.counts || {}
   return (
     <>
-      <HeroCarousel />
+      <HeroCarousel items={contentError ? [] : inLang(content?.slides)} />
       <NewAndPopular courses={courses} counts={counts} />
-      <Organizations />
+      <Organizations orgs={content?.partners} />
       <ExploreCategories courses={courses} />
       <CourseGrid courses={courses} counts={counts} />
       <Teachers counts={counts} />
       <ImpactStats />
       <WhySkillRise />
-      <Reviews />
+      <Reviews reviews={inLang(content?.reviews)} />
       <LatestPosts />
-      <Faq />
+      <Faq items={inLang(content?.faqs)} />
       <BottomCta />
     </>
   )

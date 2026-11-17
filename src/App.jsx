@@ -40,6 +40,7 @@ const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements')
 const AdminCertificates = lazy(() => import('./pages/admin/AdminCertificates'))
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
+const AdminHomepage = lazy(() => import('./pages/admin/AdminHomepage'))
 
 function DashboardRedirect() {
   const { profile } = useAuth()
@@ -99,6 +100,7 @@ export default function App() {
           <Route path="admin/announcements" element={<RequireAuth roles={ADMIN}><AdminAnnouncements /></RequireAuth>} />
           <Route path="admin/certificates" element={<RequireAuth roles={ADMIN}><AdminCertificates /></RequireAuth>} />
           <Route path="admin/messages" element={<RequireAuth roles={ADMIN}><AdminMessages /></RequireAuth>} />
+          <Route path="admin/homepage" element={<RequireAuth roles={ADMIN}><AdminHomepage /></RequireAuth>} />
           <Route path="admin/settings" element={<RequireAuth roles={ADMIN}><AdminSettings /></RequireAuth>} />
         </Route>
       </Routes>

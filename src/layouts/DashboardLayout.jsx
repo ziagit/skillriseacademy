@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Award, Bell, BookOpen, ClipboardList, ExternalLink, FileText, FolderOpen, GraduationCap, Inbox, LayoutDashboard,
-  LibraryBig, LogOut, Megaphone, Menu, PenLine, Settings, ShieldCheck, Tags, UserCheck, Users, X,
+  LibraryBig, LogOut, Megaphone, Menu, PanelsTopLeft, PenLine, Settings, ShieldCheck, Tags, UserCheck, Users, X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { cn } from '../lib/utils'
@@ -41,6 +41,7 @@ const SECTIONS = [
       { to: '/admin/applications', label: 'portalNav.applications', icon: UserCheck },
       { to: '/admin/courses', label: 'portalNav.courses', icon: FolderOpen },
       { to: '/admin/categories', label: 'portalNav.categories', icon: Tags },
+      { to: '/admin/homepage', label: 'portalNav.homepage', icon: PanelsTopLeft },
       { to: '/admin/blog', label: 'portalNav.blog', icon: FileText },
       { to: '/admin/announcements', label: 'portalNav.announcements', icon: Megaphone },
       { to: '/admin/certificates', label: 'portalNav.certificates', icon: Award },

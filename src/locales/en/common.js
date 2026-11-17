@@ -139,6 +139,7 @@ export default {
     categories: 'Categories',
     blog: 'Blog',
     messages: 'Messages',
+    homepage: 'Home page',
     siteSettings: 'Site settings',
     browseCourses: 'Browse courses',
     profileSettings: 'Profile settings',

@@ -37,13 +37,6 @@ const GROUPS = [
       ['whatsapp_url', 'url'],
     ],
   },
-  {
-    id: 'homepage',
-    fields: [
-      ['partners', 'textarea'],
-      ['testimonials', 'textarea'],
-    ],
-  },
 ]
 const LTR_TYPES = ['email', 'url']
 
