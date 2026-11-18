@@ -89,8 +89,11 @@ const SOCIAL_LABELS = {
   whatsapp: 'WhatsApp',
 }
 
-function SocialLinks({ settings, className, itemClassName = 'h-9 w-9', iconClassName = 'h-5 w-5' }) {
+export function SocialLinks({ settings, className, itemClassName = 'h-9 w-9', iconClassName = 'h-5 w-5', light = false }) {
   const socials = SOCIALS.filter((s) => settings[`${s}_url`] || s === 'tiktok' || s === 'x')
+  const linkTone = light
+    ? 'text-white/90 hover:bg-white/15 hover:text-white focus-visible:ring-white'
+    : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900 focus-visible:ring-brand-600'
   return (
     <nav aria-label="Social media links" className={className}>
       {socials.map((s) => {
@@ -98,11 +101,11 @@ function SocialLinks({ settings, className, itemClassName = 'h-9 w-9', iconClass
         const url = settings[`${s}_url`]
         const icon = <SocialIcon name={s} className={iconClassName} />
         return url ? (
-          <a key={s} href={url} target="_blank" rel="noopener noreferrer" className={cn('inline-flex items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600', itemClassName)} aria-label={label} title={label}>
+          <a key={s} href={url} target="_blank" rel="noopener noreferrer" className={cn('inline-flex items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2', linkTone, itemClassName)} aria-label={label} title={label}>
             {icon}
           </a>
         ) : (
-          <span key={s} role="img" aria-label={label} title={label} className={cn('inline-flex items-center justify-center rounded-full text-slate-400', itemClassName)}>
+          <span key={s} role="img" aria-label={label} title={label} className={cn('inline-flex items-center justify-center rounded-full', light ? 'text-white/45' : 'text-slate-400', itemClassName)}>
             {icon}
           </span>
         )

@@ -1,8 +1,11 @@
 // Login, signup, password reset and account guards.
 export default {
   auth: {
-    quote: '«زیبایی یادگیری در این است که هیچ‌کس نمی‌تواند آن را از شما بگیرد.»',
-    quoteAuthor: 'بی‌بی کینگ',
+    slogan: {
+      fa: 'یادگیری برای همه، مهارت برای آینده',
+      en: 'Learning for all, skills for the future',
+    },
+    follow: 'ما را در شبکه‌های اجتماعی دنبال کنید',
     freeCourses: 'دوره‌های رایگان',
     freeCoursesHint: 'در بیش از ۱۰ مهارت پرتقاضا',
     certificates: 'گواهینامه‌ها',

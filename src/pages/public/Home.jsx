@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight, Award, BadgeCheck, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, GraduationCap, Heart, Quote,
-  Star, Users,
+  Star, Users, X,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -583,16 +583,36 @@ function YouTubeVideos() {
   const items = videos || []
   const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, items.length)
   const [paused, setPaused] = useState(false)
-  const [playingVideoId, setPlayingVideoId] = useState(null)
+  const [selectedIndex, setSelectedIndex] = useState(null)
   const desktopCarousel = items.length > 3
+  const selectedVideo = selectedIndex === null ? null : items[selectedIndex]
+
+  const closeViewer = useCallback(() => {
+    if (document.fullscreenElement) document.exitFullscreen?.()
+    setSelectedIndex(null)
+  }, [])
 
   useEffect(() => {
-    if (paused || playingVideoId || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (selectedIndex === null) return
+    const onKey = (event) => {
+      if (event.key === 'Escape') closeViewer()
+    }
+    document.addEventListener('keydown', onKey)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [selectedIndex, closeViewer])
+
+  useEffect(() => {
+    if (paused || selectedIndex !== null || stops.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(() => {
       if (!document.hidden) goTo(active + 1)
     }, 6000)
     return () => clearInterval(id)
-  }, [active, goTo, paused, playingVideoId, stops.length])
+  }, [active, goTo, paused, selectedIndex, stops.length])
 
   const cardLayout = desktopCarousel ? 'md:basis-[calc(33.333%-0.834rem)]' : 'md:basis-auto'
   if (loading) {
@@ -633,22 +653,13 @@ function YouTubeVideos() {
             {items.map((video) => {
               const thumbnail = video.thumbnail_url || toYouTubeThumbnailUrl(video.youtube_url)
               const embedUrl = toYouTubeEmbedUrl(video.youtube_url)
-              const isPlaying = playingVideoId === video.id
               return (
                 <article key={video.id} className={cn('flex shrink-0 basis-full snap-start flex-col rounded-xl border border-slate-200 bg-white p-3', cardLayout)}>
                   <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
-                    {isPlaying && embedUrl ? (
-                      <iframe
-                        src={`${embedUrl}${embedUrl.includes('?') ? '&' : '?'}autoplay=1&playsinline=1`}
-                        title={video.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        className="absolute inset-0 h-full w-full border-0"
-                      />
-                    ) : embedUrl ? (
+                    {embedUrl ? (
                       <button
                         type="button"
-                        onClick={() => setPlayingVideoId(video.id)}
+                        onClick={() => setSelectedIndex(items.indexOf(video))}
                         aria-label={t('home.videos.watch', { title: video.title })}
                         className="group absolute inset-0 block w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-500/60"
                       >
@@ -706,6 +717,31 @@ function YouTubeVideos() {
         <p className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center text-sm text-slate-600">
           {t('home.videos.empty')}
         </p>
+      )}
+      {selectedVideo && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedVideo.title}
+          className="fixed inset-0 z-[80] flex h-[100dvh] w-screen items-center justify-center bg-black"
+        >
+          <button
+            type="button"
+            onClick={closeViewer}
+            aria-label={t('common.close')}
+            className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <iframe
+            key={selectedVideo.id}
+            src={`${toYouTubeEmbedUrl(selectedVideo.youtube_url)}${toYouTubeEmbedUrl(selectedVideo.youtube_url).includes('?') ? '&' : '?'}autoplay=1&playsinline=1&rel=0&controls=1`}
+            title={selectedVideo.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="h-full w-full border-0"
+          />
+        </div>
       )}
     </section>
   )

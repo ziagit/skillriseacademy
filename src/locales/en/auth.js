@@ -1,8 +1,11 @@
 // Login, signup, password reset and account guards.
 export default {
   auth: {
-    quote: '"The beautiful thing about learning is that nobody can take it away from you."',
-    quoteAuthor: 'B.B. King',
+    slogan: {
+      fa: 'یادگیری برای همه، مهارت برای آینده',
+      en: 'Learning for all, skills for the future',
+    },
+    follow: 'Follow us on social media',
     freeCourses: 'Free courses',
     freeCoursesHint: 'in 10+ in-demand skills',
     certificates: 'Certificates',

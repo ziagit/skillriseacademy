@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Award, BookOpen, MailCheck, Quote } from 'lucide-react'
+import { Award, BookOpen, MailCheck } from 'lucide-react'
 import { homePathFor, useAuth } from '../../context/AuthContext'
+import { useSettings } from '../../context/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import { errorMessage } from '../../lib/utils'
 import { useI18n } from '../../lib/i18n'
 import { LanguageSwitcher, Logo } from '../../components/shared'
 import { Button, Checkbox, Input, PageLoader, Textarea } from '../../components/ui'
-import { SetupBanner } from '../../layouts/PublicLayout'
+import { SetupBanner, SocialLinks } from '../../layouts/PublicLayout'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function AuthShell({ title, subtitle, children, footer }) {
   const { t } = useI18n()
+  const { settings } = useSettings()
   return (
     <div className="flex min-h-screen flex-col">
       <SetupBanner />
@@ -22,6 +24,11 @@ function AuthShell({ title, subtitle, children, footer }) {
           <div className="flex items-center justify-between gap-4">
             <Logo />
             <LanguageSwitcher />
+          </div>
+          <div className="mx-auto mt-3 w-full max-w-sm text-center lg:hidden">
+            <p dir="rtl" className="font-semibold text-brand-700">{t('auth.slogan.fa')}</p>
+            <p dir="ltr" className="mt-1 text-sm font-medium text-slate-600">{t('auth.slogan.en')}</p>
+            <SocialLinks settings={settings} className="mt-3 flex items-center justify-center gap-2" itemClassName="h-8 w-8" iconClassName="h-4 w-4" />
           </div>
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
             <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
@@ -34,11 +41,10 @@ function AuthShell({ title, subtitle, children, footer }) {
           <div className="absolute -end-24 -top-24 h-96 w-96 rounded-full bg-brand-500/60" />
           <div className="absolute -bottom-32 -start-24 h-96 w-96 rounded-full bg-brand-800/50" />
           <div className="relative flex h-full flex-col justify-center p-16 text-white">
-            <Quote className="h-10 w-10 text-amber-300" />
-            <p className="mt-6 font-display text-3xl font-semibold leading-snug text-white">
-              {t('auth.quote')}
-            </p>
-            <p className="mt-4 text-brand-100">{t('auth.quoteAuthor')}</p>
+            <div className="grid max-w-xl grid-cols-2 gap-5">
+              <p dir="rtl" className="font-display text-xl font-bold leading-relaxed text-white">{t('auth.slogan.fa')}</p>
+              <p dir="ltr" className="font-display text-xl font-bold leading-relaxed text-white">{t('auth.slogan.en')}</p>
+            </div>
             <div className="mt-14 grid max-w-md grid-cols-2 gap-4">
               <div className="rounded-xl bg-white/10 p-5 ring-1 ring-white/15">
                 <BookOpen className="h-6 w-6 text-amber-300" />
@@ -51,6 +57,8 @@ function AuthShell({ title, subtitle, children, footer }) {
                 <p className="text-sm text-brand-100">{t('auth.certificatesHint')}</p>
               </div>
             </div>
+            <p className="mt-10 text-sm font-medium text-brand-100">{t('auth.follow')}</p>
+            <SocialLinks settings={settings} light className="mt-3 flex items-center gap-2" itemClassName="h-10 w-10" iconClassName="h-5 w-5" />
           </div>
         </div>
       </div>
