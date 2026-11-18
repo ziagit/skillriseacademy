@@ -73,6 +73,18 @@ const CONTENT = {
     ],
     Row: FaqRow,
   },
+  featuredTeachers: {
+    table: 'home_featured_teachers',
+    icon: GraduationCap,
+    fields: [
+      { key: 'name', required: true, span: 2 },
+      { key: 'headline', span: 3 },
+      { key: 'photo_url', type: 'image', hint: true, aspect: 'aspect-[4/5]' },
+      { key: 'youtube_url', type: 'url', hint: true, span: 2 },
+      ORDER_FIELD,
+    ],
+    Row: FeaturedTeacherRow,
+  },
 }
 const VIDEO_CONTENT = {
   table: 'home_videos',
@@ -149,7 +161,8 @@ function ContentTab({ tab, table, icon: Icon, defaults, fields, Row, showHint = 
   if (loading) return <PageLoader />
   if (error) {
     const missingVideosTable = tab === 'videos' && (error.code === 'PGRST205' || error.message?.includes('home_videos'))
-    return <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{missingVideosTable ? t('admin.home.videosMigrationRequired') : errorMessage(error)}</p>
+    const missingTeachersTable = tab === 'featuredTeachers' && (error.code === 'PGRST205' || error.message?.includes('home_featured_teachers'))
+    return <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{missingVideosTable ? t('admin.home.videosMigrationRequired') : missingTeachersTable ? t('admin.home.featuredTeachersMigrationRequired') : errorMessage(error)}</p>
   }
   const items = data || []
   const nextOrder = Math.max(0, ...items.map((d) => d.sort_order)) + 1
@@ -212,6 +225,10 @@ function ContentModal({ tab, table, fields, state, onClose, onSaved }) {
   const save = async (e) => {
     e.preventDefault()
     if (tab === 'videos' && !toYouTubeEmbedUrl(form.youtube_url)) {
+      toast.error(t('admin.home.invalidYoutubeUrl'))
+      return
+    }
+    if (tab === 'featuredTeachers' && form.youtube_url?.trim() && !toYouTubeEmbedUrl(form.youtube_url)) {
       toast.error(t('admin.home.invalidYoutubeUrl'))
       return
     }
@@ -282,7 +299,7 @@ function FormField({ field, value, onChange }) {
     return (
       <div className={cn(className, field.square && 'max-w-40')}>
         <p className="mb-2 text-sm font-medium text-slate-700">{label}</p>
-        <ImageUpload value={value || ''} onChange={onChange} folder="home" aspect={field.square ? 'aspect-square' : 'aspect-video'} />
+        <ImageUpload value={value || ''} onChange={onChange} folder="home" aspect={field.aspect || (field.square ? 'aspect-square' : 'aspect-video')} />
         {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
       </div>
     )
@@ -380,6 +397,23 @@ function VideoRow({ item }) {
         <p dir="auto" className="font-semibold text-slate-900">{item.title}</p>
         {item.channel && <p dir="auto" className="mt-0.5 text-sm text-slate-500">{item.channel}</p>}
         <p dir="ltr" className="mt-1 truncate text-start text-xs text-slate-500">{item.youtube_url}</p>
+      </div>
+    </div>
+  )
+}
+
+function FeaturedTeacherRow({ item }) {
+  return (
+    <div className="flex items-start gap-3">
+      {item.photo_url ? (
+        <img src={item.photo_url} alt="" className="aspect-[4/5] w-14 shrink-0 rounded object-cover" />
+      ) : (
+        <span className="flex aspect-[4/5] w-14 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-400"><GraduationCap className="h-6 w-6" /></span>
+      )}
+      <div className="min-w-0">
+        <p dir="auto" className="font-semibold text-slate-900">{item.name}</p>
+        {item.headline && <p dir="auto" className="mt-0.5 line-clamp-2 text-sm text-slate-600">{item.headline}</p>}
+        {item.youtube_url && <p dir="ltr" className="mt-1 truncate text-start text-xs text-slate-500">{item.youtube_url}</p>}
       </div>
     </div>
   )

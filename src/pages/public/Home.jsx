@@ -755,7 +755,11 @@ function Teachers({ counts }) {
     async () => unwrap(await supabase.from('profiles').select('id, full_name, avatar_url, headline, youtube_url, courses:courses!courses_teacher_id_fkey(id, status)').eq('role', 'teacher').eq('show_on_home', true)),
     [],
   )
-  const teachers = (data || [])
+  const { data: featuredData } = useQuery(
+    async () => unwrap(await supabase.from('home_featured_teachers').select('id, name, headline, photo_url, youtube_url').eq('published', true).order('sort_order').order('created_at')),
+    [],
+  )
+  const profileTeachers = (data || [])
     .map((p) => {
       const published = p.courses.filter((c) => c.status === 'published')
       return { ...p, courseCount: published.length, learners: published.reduce((sum, c) => sum + (counts[c.id] || 0), 0) }
@@ -763,6 +767,15 @@ function Teachers({ counts }) {
     .filter((p) => p.courseCount > 0)
     .sort((a, b) => b.learners - a.learners || b.courseCount - a.courseCount)
     .slice(0, 8)
+  const featuredTeachers = (featuredData || []).map((p) => ({
+    id: `featured-${p.id}`,
+    full_name: p.name,
+    headline: p.headline,
+    avatar_url: p.photo_url,
+    youtube_url: p.youtube_url,
+    isFeatured: true,
+  }))
+  const teachers = [...featuredTeachers, ...profileTeachers].slice(0, 8)
   const { trackRef, active, stops, goTo, onScroll } = useCarouselTrack(dir, teachers.length)
   const cardBasis = teachers.length === 2 ? 'sm:basis-[52%] md:basis-[52%] xl:basis-[52%]' : 'md:basis-[34%] xl:basis-[26%]'
 
@@ -826,10 +839,12 @@ function Teachers({ counts }) {
             )}
             <h3 dir="auto" className="mt-2 font-semibold text-slate-900">{p.full_name}</h3>
             {p.headline && <p dir="auto" className="mt-1 line-clamp-2 text-sm text-slate-600">{p.headline}</p>}
-            <p className="mt-auto flex flex-wrap justify-center gap-x-1.5 pt-3 text-xs text-slate-500">
-              <span>{t('home.categories.courseCount', { count: p.courseCount })}</span>
-              {p.learners > 0 && <span>· {t('course.learners', { count: p.learners })}</span>}
-            </p>
+            {!p.isFeatured && (
+              <p className="mt-auto flex flex-wrap justify-center gap-x-1.5 pt-3 text-xs text-slate-500">
+                <span>{t('home.categories.courseCount', { count: p.courseCount })}</span>
+                {p.learners > 0 && <span>· {t('course.learners', { count: p.learners })}</span>}
+              </p>
+            )}
           </article>
         ))}
       </div>
